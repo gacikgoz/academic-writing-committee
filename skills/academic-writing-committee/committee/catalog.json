@@ -1,0 +1,156 @@
+{
+ "readers": {
+  "newcomer": {
+   "key": "newcomer",
+   "persona": "a reader who has the stated prerequisites but meets this topic for the first time; flags every undefined term, skipped step, unexplained symbol, unreadable figure and place where they would ask 'what is this?'",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "expert": {
+   "key": "expert",
+   "persona": "a researcher who knows the field well; flags what is imprecise, outdated, shallow or missing (assumptions, guarantees, recent results, failure cases, open problems, key related work) and anything they would skip as already known",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "skimmer": {
+   "key": "skimmer",
+   "persona": "a busy reader who reads only the title, abstract, headings, first sentences, figures, captions, tables and conclusion; flags when the contribution, method and evidence cannot be recovered that way",
+   "model": "haiku",
+   "effort": "medium"
+  },
+  "pc-reviewer": {
+   "key": "pc-reviewer",
+   "persona": "a time-pressed program-committee reviewer who must decide within about twenty minutes whether the paper is clearly novel, sound and well evaluated; reports the first doubts that would lower the score and whether the contributions are believable from the abstract, introduction and main results",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "adjacent": {
+   "key": "adjacent",
+   "persona": "a researcher from a neighboring field reading the paper to learn the idea; flags jargon, missing motivation and steps that only insiders could follow",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "practitioner": {
+   "key": "practitioner",
+   "persona": "a practitioner deciding whether and how to use the methods described; flags missing guidance on when to use what, unclear trade-offs, missing implementation details and unclear recommendations",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "examiner": {
+   "key": "examiner",
+   "persona": "an external thesis examiner who checks that the claimed contributions are original, substantiated and consistent across the abstract, introduction, chapters and conclusion, and prepares viva questions about the weakest points",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "generalist": {
+   "key": "generalist",
+   "persona": "an intelligent nonspecialist (committee member or panel generalist) who needs the significance, the main idea and the conclusions to be clear without specialist knowledge",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "specialist": {
+   "key": "specialist",
+   "persona": "a specialist panel reviewer who scores significance, innovation, approach and feasibility, and looks for weaknesses in the methods, timeline and preliminary evidence",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "chapter-skimmer": {
+   "key": "chapter-skimmer",
+   "persona": "a student or practitioner who reads only the headings, opening sentences, figures, captions, boxes, tables and the chapter summary; flags when the key ideas and results of the chapter cannot be recovered that way",
+   "model": "haiku",
+   "effort": "medium"
+  }
+ },
+ "reviewers": {
+  "guidelines": {
+   "key": "guidelines",
+   "focus": "compliance with every applicable rule of the project's guidelines and style sheet; cite the rule for each finding",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "technical": {
+   "key": "technical",
+   "focus": "correctness of every definition, claim, derivation, equation, algorithm, number and code fragment; recompute numerical examples with a script; consistent notation, units and dimensions; correct statements of known results and their assumptions",
+   "model": "opus",
+   "effort": "high",
+   "critical": {
+    "model": "fable",
+    "effort": "high"
+   }
+  },
+  "claims": {
+   "key": "claims",
+   "focus": "calibration and coherence of claims: no overclaiming (unsupported superlatives, 'prove' for empirical results, 'state of the art' without dated evidence, generalizing beyond the evidence) and no underselling (stacked hedges, buried or vague contributions); every contribution stated in the abstract and introduction is supported by specific evidence in the body and restated consistently in the discussion and conclusion; limitations are honest; numbers and claims agree everywhere they appear",
+   "model": "opus",
+   "effort": "high"
+  },
+  "experiments": {
+   "key": "experiments",
+   "focus": "experimental design and reporting: research questions mapped to experiments, appropriate datasets and baselines (strong, tuned, current), ablations, statistical uncertainty (seeds, variance, confidence intervals, significance where claimed), fair comparison and compute budgets, reproducibility details, negative or mixed results reported, and conclusions drawn only from what the experiments show",
+   "model": "opus",
+   "effort": "high"
+  },
+  "references": {
+   "key": "references",
+   "focus": "every reference is real and correctly described: verify authors, title, venue, year and identifier (DOI, arXiv id, ISBN or publisher page) with web search and the citation checker; flag any reference that cannot be found as a blocker; check that each cited work actually supports the sentence citing it, that primary sources are cited, and that essential related work is not missing",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "pedagogy": {
+   "key": "pedagogy",
+   "focus": "cumulative explanation and prerequisites, definitions before use, examples before abstraction, level range from entry to advanced, redundancy, worked examples, exercises and solutions",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "coverage": {
+   "key": "coverage",
+   "focus": "completeness and balance of the literature covered for the stated scope and period, a clear and defensible taxonomy, synthesis and comparison rather than paper-by-paper listing, identification of trends, open problems and research directions",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "presentation": {
+   "key": "presentation",
+   "focus": "the rendered document: figures, tables, equations, algorithms, lists, headings and layout; legibility at print size, labels and units, captions that say what to notice, every figure and table referred to and explained in the text",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "language": {
+   "key": "language",
+   "focus": "fluency and coherence: paragraph flow and transitions, one idea per paragraph, consistent terminology, no repetitive wording or formulaic transitions, correct hyphens, en dashes and em dashes, no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  "venue": {
+   "key": "venue",
+   "focus": "compliance with the venue's or call's requirements: page or word limits, template and formatting, anonymization for double-anonymous review, required sections and statements (limitations, ethics, broader impact, reproducibility or data availability checklists, funding, conflicts), reference style and supplementary material rules",
+   "model": "sonnet",
+   "effort": "low"
+  },
+  "significance": {
+   "key": "significance",
+   "focus": "novelty and significance relative to the closest prior work: what is new, why it matters, whether the related work section positions the contribution accurately and fairly, and whether the paper explains what the reader can now do that they could not before",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "feasibility": {
+   "key": "feasibility",
+   "focus": "for proposals: whether aims, methods, timeline, team, resources and budget are consistent and achievable, whether preliminary evidence supports feasibility, and whether risks have alternatives",
+   "model": "opus",
+   "effort": "high"
+  }
+ },
+ "editors": {
+  "line": {
+   "key": "line",
+   "focus": "prose: clarity, concision, flow between sentences and paragraphs, terminology, punctuation including hyphens and dashes, parallel lists; remove filler, formulaic transitions and repetition without removing substance or adding claims",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  "consistency": {
+   "key": "consistency",
+   "focus": "notation, terminology and spelling across the document and against the glossary; numbers, names and claims identical wherever repeated (abstract, introduction, body, conclusion); labels, cross-references, captions, citation and reference formatting",
+   "model": "sonnet",
+   "effort": "medium"
+  }
+ }
+}

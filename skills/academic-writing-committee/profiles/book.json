@@ -1,0 +1,99 @@
+{
+ "type": "book",
+ "description": "Textbook or monograph: many chapters, read cumulatively by a wide audience.",
+ "section": "Book (Textbook or Monograph)",
+ "unitization": "chapters",
+ "defaultDifficulty": "standard",
+ "goal": "Bring every chapter up to the guidelines and make the book read as one cumulative course.",
+ "note": "Units are chapters; the integration editor, the cross-unit claims review and the editor-in-chief keep terminology, notation, numbers and cumulative order consistent across chapters. Put the preface and introduction in a final stage so they describe the revised book.",
+ "readers": [
+  {
+   "key": "newcomer",
+   "persona": "a reader who has the stated prerequisites but meets this topic for the first time; flags every undefined term, skipped step, unexplained symbol, unreadable figure and place where they would ask 'what is this?'",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "expert",
+   "persona": "a researcher who knows the field well; flags what is imprecise, outdated, shallow or missing (assumptions, guarantees, recent results, failure cases, open problems, key related work) and anything they would skip as already known",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  {
+   "key": "chapter-skimmer",
+   "persona": "a student or practitioner who reads only the headings, opening sentences, figures, captions, boxes, tables and the chapter summary; flags when the key ideas and results of the chapter cannot be recovered that way",
+   "model": "haiku",
+   "effort": "medium"
+  }
+ ],
+ "reviewers": [
+  {
+   "key": "guidelines",
+   "focus": "compliance with every applicable rule of the project's guidelines and style sheet; cite the rule for each finding",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "technical",
+   "focus": "correctness of every definition, claim, derivation, equation, algorithm, number and code fragment; recompute numerical examples with a script; consistent notation, units and dimensions; correct statements of known results and their assumptions",
+   "model": "opus",
+   "effort": "high",
+   "critical": {
+    "model": "fable",
+    "effort": "high"
+   }
+  },
+  {
+   "key": "claims",
+   "focus": "calibrated claims in expository text: no overclaiming (unqualified superlatives, 'solves', 'state of the art' or performance numbers without a dated source, results generalized beyond their conditions, history or priority claims without a source) and no underselling (stacked hedges, 'merely' or 'just' for a supported result); every number, claim and name identical wherever it recurs (body, boxes, captions, tables, summary, exercises), and a chapter summary that claims only what the chapter establishes",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  {
+   "key": "pedagogy",
+   "focus": "cumulative explanation and prerequisites, definitions before use, examples before abstraction, level range from entry to advanced, redundancy, worked examples, exercises and solutions",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  {
+   "key": "presentation",
+   "focus": "the rendered document: figures, tables, equations, algorithms, lists, headings and layout; legibility at print size, labels and units, captions that say what to notice, every figure and table referred to and explained in the text",
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "references",
+   "focus": "every reference is real and correctly described: verify authors, title, venue, year and identifier (DOI, arXiv id, ISBN or publisher page) with web search and the citation checker; flag any reference that cannot be found as a blocker; check that each cited work actually supports the sentence citing it, that primary sources are cited, and that essential related work is not missing",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  {
+   "key": "language",
+   "focus": "fluency and coherence: paragraph flow and transitions, one idea per paragraph, consistent terminology, no repetitive wording or formulaic transitions, correct hyphens, en dashes and em dashes, no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
+   "model": "sonnet",
+   "effort": "medium"
+  }
+ ],
+ "editors": [
+  {
+   "key": "line",
+   "focus": "prose: clarity, concision, flow between sentences and paragraphs, terminology, punctuation including hyphens and dashes, parallel lists; remove filler, formulaic transitions and repetition without removing substance or adding claims",
+   "model": "sonnet",
+   "effort": "high"
+  },
+  {
+   "key": "consistency",
+   "focus": "notation, terminology and spelling across the document and against the glossary; numbers, names and claims identical wherever repeated (abstract, introduction, body, conclusion); labels, cross-references, captions, citation and reference formatting",
+   "model": "sonnet",
+   "effort": "medium"
+  }
+ ],
+ "limits": {
+  "maxRounds": 5,
+  "maxGlobalRounds": 2,
+  "waveSize": 6,
+  "maxRepairs": 2,
+  "maxAgents": 900
+ },
+ "roster": {}
+}

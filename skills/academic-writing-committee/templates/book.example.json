@@ -1,0 +1,55 @@
+{
+  "name": "Statistical Learning: A Textbook",
+  "publicationType": "book",
+  "goal": "Revise every chapter so that it satisfies guidelines.md in full, editing rather than rewriting and preserving substantive content.",
+  "language": "English",
+  "guidelines": ["guidelines.md"],
+  "context": ["notation.md", "glossary.md"],
+  "sharedFiles": ["main.tex", "references.bib"],
+  "bibliography": "references.bib",
+  "assetDir": "figures/{unit}",
+  "checks": {
+    "unit": "latexmk -xelatex -interaction=nonstopmode -outdir=.writing-committee/build/{unit} {main}",
+    "global": ["latexmk -xelatex -interaction=nonstopmode -outdir=.writing-committee/build/full main.tex"],
+    "notes": "{main} is the unit's first file (the chapter). If chapters cannot be compiled on their own, replace the unit command with a script that compiles one chapter with the main preamble. The committee also runs {skill}/scripts/check_manuscript.py and check_citations.py on every unit and on the whole book."
+  },
+  "stages": [
+    {
+      "id": "conventions",
+      "goal": "Settle notation and the preamble before the chapters are revised.",
+      "units": [
+        { "id": "preamble", "title": "Preamble And Notation", "files": ["preamble.tex", "notation.md"], "difficulty": "critical", "goal": "Implement the guidelines' typography and notation rules." }
+      ]
+    },
+    {
+      "id": "chapters",
+      "goal": "Revise every chapter.",
+      "unitsFrom": {
+        "glob": "chapters/*.tex",
+        "idPattern": "ch(?P<num>\\d+)",
+        "idTemplate": "chapter-{num_int}",
+        "companions": ["exercises/ch{num}-*.tex"],
+        "inputsAsCompanions": true,
+        "orderFrom": "main.tex",
+        "difficulty": "standard",
+        "difficultyOverrides": { "chapter-7": "hard" },
+        "goal": "Bring this chapter up to the guidelines."
+      }
+    },
+    {
+      "id": "additions",
+      "goal": "Write the new sections the roadmap asks for.",
+      "scope": "Every item marked 'must' in roadmap.md that needs a new file."
+    },
+    {
+      "id": "front-matter",
+      "goal": "Revise the preface and the introduction last, so that they describe the revised book.",
+      "units": [
+        { "id": "introduction", "title": "Preface and Introduction", "files": ["frontmatter/preface.tex", "frontmatter/introduction.tex"], "difficulty": "hard", "goal": "State what the book covers, for whom, and in what order, exactly as the revised chapters deliver it." }
+      ]
+    }
+  ],
+  "limits": { "maxRounds": 4, "maxGlobalRounds": 2, "waveSize": 6, "maxRepairs": 2, "maxAgents": 900 },
+  "commit": { "perWave": true, "push": false, "branch": "" },
+  "adaptRoster": true
+}

@@ -1,0 +1,16 @@
+{
+  "name": "academic-writing-committee",
+  "description": "The academic-writing-committee plugin: academic writing guide, checkers, and an optional multi-agent writing committee.",
+  "owner": {
+    "name": "gacikgoz",
+    "url": "https://github.com/gacikgoz"
+  },
+  "plugins": [
+    {
+      "name": "academic-writing-committee",
+      "source": "./",
+      "description": "Academic writing guide, publication-type profiles, manuscript and citation checkers, and an optional multi-agent writing committee (writers, readers, reviewers, editors). Run with --no-committee for plain single-session academic writing.",
+      "version": "2.0.0"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Robust Retrieval Under Distribution Shift",
+  "publicationType": "conference-paper",
+  "goal": "Make the paper ready for submission: a clear contribution on the first page, convincing and honestly reported experiments, calibrated claims, verified references, and compliance with the venue's page limit and anonymization rules.",
+  "language": "English",
+  "guidelines": ["venue-rules.md"],
+  "context": ["notes/reviews-from-last-submission.md"],
+  "documents": ["paper.tex"],
+  "bibliography": "references.bib",
+  "checks": {
+    "unit": "latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=.writing-committee/build/{unit} {main}",
+    "global": [
+      "latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=.writing-committee/build/full paper.tex"
+    ],
+    "notes": "venue-rules.md lists the page limit, template, anonymization and required checklist sections. The placeholders for the skill directory and the bibliography are filled in automatically; the committee also runs both checkers on the unit in every round and on every file of the paper in each global round, with online citation verification."
+  },
+  "commit": { "perWave": true, "push": false, "branch": "" }
+}
