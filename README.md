@@ -3,7 +3,7 @@
 **Academic writing for Claude that holds every sentence to the standard of a careful editor, and can put a whole committee of readers, reviewers and editors behind it when it matters.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Version 2.3.0](https://img.shields.io/badge/version-2.3.0-informational)
+![Version 2.4.0](https://img.shields.io/badge/version-2.4.0-informational)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin%20%2B%20skill-8A63D2)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -30,6 +30,7 @@ It works in two ways:
   - [6. What the Committee Keeps on Disk](#6-what-the-committee-keeps-on-disk)
   - [7. Long Documents, Cost and Troubleshooting](#7-long-documents-cost-and-troubleshooting)
 - [What It Enforces](#what-it-enforces)
+- [Recent Work from the Target Journal](#recent-work-from-the-target-journal)
 - [How the Committee Works](#how-the-committee-works)
 - [Publication Types and Committee Size](#publication-types-and-committee-size)
   - [Committee Modes: Low, Medium, High, Full](#committee-modes-low-medium-high-full)
@@ -69,11 +70,14 @@ or just say what you want ("help me get my paper ready for NeurIPS"). That is al
    |---|---|
    | What should I do: revise with a committee, revise here without one, review only, or check references and language? | the request does not say |
    | What kind of document is this? | the type is uncertain |
+   | Which journal is it for? | a journal article whose source does not name the journal |
    | What should the revision achieve? | always, for a whole document |
    | Are there rules the text must follow? | no guidelines file was found |
    | How large should the committee be, and at what effort? | for a committee |
 
 4. **It does the work.** It edits, reviews or checks in your session, or writes the committee's configuration, checks that the build works, tells you the plan in three lines and launches the committee.
+
+For a journal article it also adds **two or three related works the target journal published in the last six months** ([Recent Work from the Target Journal](#recent-work-from-the-target-journal)).
 
 A sentence, a paragraph or a section needs none of this: ask, and it is done at once. Run `/academic-writing-committee:start` again later and it continues the run already under way instead of starting over.
 
@@ -220,6 +224,7 @@ The fields you will use most:
 | `publicationType` | **Required.** One of the [nine profiles](#choosing-the-type); it chooses the readers, reviewer lenses, editors and limits. |
 | `committeeSize` | `low`, `medium`, `high` or `full` (default): how large the committee is ([Committee Modes](#committee-modes-low-medium-high-full)). `--size` overrides it for one run. |
 | `effort` | `low`, `medium`, `high`, `xhigh`, `max` or `default`: the effort of every role ([Effort](#effort)). Claude asks for it if it is missing; `--effort` overrides it for one run. |
+| `recentWork` | the target journal, for [recent related work](#recent-work-from-the-target-journal); set for you when the journal is known. |
 | `goal` | What the whole effort must achieve. Every agent reads it, so state your priorities here (for example "keep the author's text; change a paragraph only where a rule requires it"). |
 | `guidelines`, `context` | Your rule files, and other files every agent should know (notation table, roadmap, earlier reviews). |
 | `documents` or `stages` | What is revised, as whole documents or as units per stage. |
@@ -333,6 +338,26 @@ The guide rests on twelve principles and four standards that reviewers raise aga
 - **Clean language.** Hyphens, en dashes and em dashes are used correctly. Chains of *and*, repeated words and openings, formulaic transitions and stacked hedges go.
 - **The author's voice.** Text is edited, not replaced. Terminology and claims stay unless they are the problem, and every substantive change comes with its reason.
 - **Project rules first.** The venue's instructions and the project's own guidelines outrank the field's conventions, which outrank the skill.
+
+---
+
+## Recent Work from the Target Journal
+
+Editors and reviewers expect a submission to know what their journal has published lately. For a journal article, the skill adds **two or three related works that the target journal published in the last six months** to the related-work section, with or without a committee.
+
+- **The journal** is read from the source (`\journal{...}` in `elsarticle`, `\journalname{...}` in Springer's class, `journal:` in Markdown front matter), or asked once when it is missing.
+- **The candidates** come from Crossref: the journal's articles of the last six months, ranked by how well they match the manuscript's title and abstract.
+- **Each one is read before it is cited.** Only works on the same problem, method or data are kept. Their BibTeX comes from doi.org, never from memory. Each gets one or two sentences that say what it does and how the manuscript relates to it.
+- **Nothing is padded.** If fewer than two are really related, only those are added, and the report says why.
+
+You can run the search yourself:
+
+```bash
+python3 skills/academic-writing-committee/scripts/venue_recent.py --venue "Pattern Recognition" --from main.tex
+python3 skills/academic-writing-committee/scripts/venue_recent.py --bibtex 10.1016/j.patcog.2025.113013
+```
+
+In the configuration, this is the `recentWork` field: `{"venue": "Pattern Recognition", "months": 6, "count": [2, 3]}`. Set `months` to look further back, `issn` when the journal's name is ambiguous, or leave the field out (`project_setup.py init --no-recent`) to skip the step. Conference proceedings are not covered by the script; for a conference paper, ask for it and the skill searches the venue's recent proceedings instead.
 
 ---
 
@@ -529,7 +554,7 @@ A unit costs about 24 to 28 agent calls in the default `full` mode, depending on
 
 ## Status
 
-Version 2.3.0. The writing guide, the checkers, the guided start, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
+Version 2.4.0. The writing guide, the checkers, the guided start, the recent-work search, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
 
 ---
 
@@ -547,7 +572,7 @@ skills/academic-writing-committee/
   profiles/                    one JSON profile per publication type
   committee/                   procedure, roles, quality gates, models, configuration, catalog
   workflow/committee.js        the committee workflow
-  scripts/                     project_setup.py, prepare_run.py, check_manuscript.py, check_citations.py
+  scripts/                     project_setup.py, venue_recent.py, prepare_run.py, check_manuscript.py, check_citations.py
   templates/                   example project configurations
   SOURCES.md, LICENSES/        the works this skill draws on, and their licenses
 ```

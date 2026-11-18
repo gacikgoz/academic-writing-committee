@@ -23,6 +23,7 @@ The user should never need to know the modes, the flags or the configuration for
 4. **Ask the open questions with the question tool, in one batch.** That is at most four questions with at most four options each, the recommended option first and marked "(Recommended)". Order them by how much the answer changes:
    - **The task**, if the request does not make it clear: revise with a committee, revise in this session without one, review only (a report, no edits), or check references and language.
    - **The publication type**, only when the confidence is not high: offer the guess first.
+   - **The journal**, for a journal article whose source does not name it (`\journal{}`, `\journalname{}` or `journal:`): it is needed for the recent-work step below.
    - **The goal**: submission to the detected venue, meeting the detected guidelines, or clearer prose without changing the content.
    - **The guidelines**, only when none were found.
    - **For a committee: the size and the effort** (sizes `low`, `medium`, `high`, `full`; effort `high`, `medium`, `xhigh`, `low`, with `max` and `default` accepted as Other). If they do not fit in the first batch, ask them in a second, never in a third.
@@ -55,6 +56,18 @@ The skill can always run as plain academic writing, with no committee: one sessi
 - The principles, the four standards, the process, the checklists and the checkers below apply unchanged.
 
 Say once, at the start, that the run is without a committee.
+
+## Recent Work from the Target Journal
+
+Editors and reviewers expect a submission to know what their journal has published lately. For a **journal article** with a known target journal, add **two or three related works that the journal published in the last six months** to the related-work discussion, in every mode, with or without a committee. The detection reads the journal from the source and asks for it when it is missing; the configuration keeps it as `recentWork` (`committee/config.md`), which turns it into a task for the writer.
+
+1. **Find candidates:** `python3 ${CLAUDE_SKILL_DIR}/scripts/venue_recent.py --venue "<journal>" --from <main file> --months 6`. It resolves the journal at Crossref and ranks its recent articles by how well they match the manuscript's title and abstract. Pass `--issn` when the name is ambiguous.
+2. **Read before citing.** Open each promising candidate's DOI and read at least its abstract. Keep only works that address the same problem, method or data. Relevance is the test, not recency or score.
+3. **Add the entries** to the bibliography from `venue_recent.py --bibtex <DOI>`, never from memory.
+4. **Write one or two sentences per work** in the related-work section (or the introduction when there is none): what it does, and how this manuscript relates to it or differs from it. Cite it only for what it says. Keep the author's text around the addition unchanged.
+5. **Never pad.** If fewer than two candidates are genuinely related, add only those and say why. If Crossref cannot be reached, search the journal's site and say so.
+
+The step is skipped for other publication types, when the user says the paper has no target journal, or with `project_setup.py init --no-recent`. Conference proceedings are not covered by the script; for a conference paper, do it only when the user asks, by searching the venue's recent proceedings.
 
 ## Committee Runs
 
@@ -267,6 +280,7 @@ For a long document, or whenever the user asks for writers, readers, reviewers, 
 | `committee/config.md` | The project configuration file, `writing-committee.json` |
 | `committee/catalog.json` | Every reader persona, reviewer lens, and editor |
 | `profiles/*.json`, `templates/*.json` | Committee defaults per publication type, and example configurations |
+| `scripts/venue_recent.py` | Recent articles of a journal (last N months, Crossref) that match the manuscript, and their BibTeX from doi.org |
 | `scripts/project_setup.py` | `detect` reads what the project already says (document, type, venue, chapters, bibliography, guidelines, build, an existing run) and lists the open questions; `init` writes the configuration from the answers |
 | `scripts/prepare_run.py` | Expands units, applies the profile, writes the workflow arguments, records results (`--review-only` for a review, `--shards K` for several workflows at once, `--plan-only` for briefs ahead of the revision) |
 | `workflow/committee.js` | The committee workflow, launched with the Workflow tool |

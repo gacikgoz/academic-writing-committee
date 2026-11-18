@@ -278,6 +278,28 @@ def apply_size(cfg, profile, size=None):
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
 
 
+def recent_work(cfg, run_args):
+    """The task text for `recentWork`: add a few related works that the target journal published recently.
+    Returns None when the configuration has no recentWork."""
+    rw = cfg.get("recentWork")
+    if not rw:
+        return None
+    venue = rw.get("venue") or rw.get("journal")
+    if not venue:
+        sys.exit("recentWork: give the journal as recentWork.venue")
+    months = rw.get("months", 6)
+    lo, hi = (rw.get("count") or [2, 3]) if isinstance(rw.get("count"), list) else (rw.get("count", 2), rw.get("count", 3))
+    issn = f' --issn {rw["issn"]}' if rw.get("issn") else ""
+    script = f'python3 {SKILL_DIR}/scripts/venue_recent.py --venue "{venue}"{issn} --from <the main document> --months {months}'
+    return (f"Recent work from the target journal: add {lo} to {hi} related works that {venue} published in the last "
+            f"{months:g} months to the related-work discussion (the related-work section, or the introduction when there is "
+            f"none). Find the candidates with `{script}`. Open each candidate's DOI and read at least its abstract; keep only "
+            f"works that are genuinely related to this manuscript's problem or method. Add their entries to the bibliography "
+            f"with `venue_recent.py --bibtex <DOI>`, and cite each one for what it actually says, in one or two sentences that "
+            f"relate it to this work. If fewer than {lo} are genuinely related, add only those and report why; never pad the "
+            f"list. The writer does this in the first round, and the references lens verifies each addition.")
+
+
 def run_effort(cfg, effort=None):
     """The run's effort level (low, medium, high, xhigh, max), or None for each role's own default.
     The workflow gives it to every role except the mechanical checker and the committer; the last
@@ -689,6 +711,9 @@ def prepare(args):
         "globalFiles": global_files,
     }
     run_args.update(roster_lists(cfg, profile))
+    recent = recent_work(cfg, run_args)
+    if recent:
+        run_args["goal"] = (run_args["goal"] + "\n\n" + recent).strip()
     learned = apply_learned_roster(state, run_args, cfg)
     for g in run_args["guidelines"]:
         if not os.path.isfile(os.path.join(root, g)):

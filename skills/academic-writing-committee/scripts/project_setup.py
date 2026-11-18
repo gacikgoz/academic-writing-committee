@@ -9,6 +9,7 @@ what the repository cannot answer, and write the committee configuration from th
       proposed configuration and the questions that remain open (--json: everything as JSON).
 
   project_setup.py init [ROOT] [--type T] [--size S] [--effort E] [--goal TEXT] [--guidelines F,...]
+                        [--journal NAME] [--recent-months N] [--no-recent]
                         [--main F] [--bib F] [--name TEXT] [--out writing-committee.json] [--force]
       Write the configuration: the detected values, overridden by the answers given. Refuses to
       overwrite an existing file without --force. Prints the next command to run.
@@ -102,6 +103,8 @@ def tex_info(root, rel):
         "chapters": len(re.findall(r"\\chapter\*?\s*[\[{]", s)),
         "fontspec": bool(re.search(r"fontspec|unicode-math|polyglossia", " ".join(pkgs))),
         "abstract": "\\begin{abstract}" in s,
+        "journal": (lambda m: re.sub(r"\s+", " ", m.group(1)).strip() if m else None)(
+            re.search(r"\\(?:journal|journalname|jname)\s*\{([^{}]+)\}", s)),
     }
 
 
@@ -282,12 +285,19 @@ def detect(root):
     context = sorted({f for f in texts if CONTEXT_NAMES.search(os.path.basename(f)) and f not in guidelines and f.lower().endswith((".md", ".markdown", ".txt"))})[:6]
 
     title = main["title"] if main else None
+    journal = main.get("journal") if main else None
+    if not journal and md_docs:
+        m = re.search(r"^journal:\s*['\"]?(.+?)['\"]?\s*$", read(root, md_docs[0], 20_000), re.M)
+        journal = m.group(1).strip() if m else None
     if not title and md_docs:
         m = re.search(r"^#\s+(.+)$", read(root, md_docs[0], 20_000), re.M) or re.search(r"^title:\s*['\"]?(.+?)['\"]?$", read(root, md_docs[0], 20_000), re.M)
         title = m.group(1).strip() if m else None
     ptype, conf, reasons, venue = guess_type(main, ([main["file"]] if main else []) + (md_docs[:1] if len(md_docs) == 1 else []) + [os.path.basename(root)], title, len(chapter_files))
     if not main and md_docs and not ptype:
         ptype, conf, reasons = ("book" if chapter_files else "journal-article"), "low", ["Markdown documents without class or venue hints"]
+    if journal and ptype in (None, "journal-article", "technical-report"):
+        ptype, conf = "journal-article", "high"
+        reasons = reasons + [f"the source names the journal ({journal})"]
     if ptype not in CHAPTER_TYPES:  # a paper, report or proposal is judged as a whole, never section by section
         chapter_glob, chapter_files = None, []
 
@@ -336,6 +346,8 @@ def detect(root):
         proposed["checks"] = {"unit": build["unit"], "global": build["global"]}
         if build["note"]:
             proposed["checks"]["notes"] = build["note"]
+    if ptype == "journal-article" and journal:
+        proposed["recentWork"] = {"venue": journal, "months": 6, "count": [2, 3]}
     proposed["commit"] = {"perWave": True, "push": False, "branch": ""}
 
     questions = []
@@ -348,8 +360,12 @@ def detect(root):
             opts += [x for x in common if x not in opts][: 4 - len(opts)]
             questions.append({"id": "type", "question": "What kind of document is this?", "options": opts, "recommended": ptype,
                               "why": "; ".join(reasons)})
+        if ptype in (None, "journal-article") and not journal:
+            questions.append({"id": "journal", "question": "Which journal is it for? I will add 2-3 related works that journal published in the last 6 months.",
+                              "options": ["Not for a specific journal: skip this", "Other (name the journal)"],
+                              "recommended": None, "why": "the source does not name the journal"})
         questions.append({"id": "goal", "question": "What should the revision achieve?",
-                          "options": ([f"Ready for submission to {venue}"] if venue else ["Ready for submission"]) +
+                          "options": ([f"Ready for submission to {journal or venue}"] if (journal or venue) else ["Ready for submission"]) +
                                      (["Meet the rules in " + guidelines[0]] if guidelines else []) +
                                      ["Clearer, tighter prose without changing the content", "Other (describe)"],
                           "recommended": None, "why": "the goal is what every agent works toward; the repository cannot state it"})
@@ -375,6 +391,7 @@ def detect(root):
         "document_class": (main or {}).get("class"),
         "title": title,
         "venue": venue,
+        "journal": journal,
         "publication_type": {"guess": ptype, "confidence": conf, "reasons": reasons},
         "units": {"kind": "chapters" if chapter_glob else "whole document", "glob": chapter_glob, "count": len(chapter_files) or (1 if (main or md_docs) else 0),
                   "examples": chapter_files[:5]},
@@ -403,7 +420,8 @@ def summary(d):
     if d["title"]:
         L.append(f"title: {d['title']}")
     pt = d["publication_type"]
-    L.append(f"publication type: {pt['guess'] or 'unknown'} (confidence {pt['confidence']})" + (f"; venue: {d['venue']}" if d["venue"] else ""))
+    L.append(f"publication type: {pt['guess'] or 'unknown'} (confidence {pt['confidence']})" + (f"; venue: {d['venue']}" if d["venue"] else "")
+             + (f"; journal: {d['journal']} (2-3 recent related works will be looked up)" if d.get("journal") else ""))
     u = d["units"]
     L.append(f"units: {u['kind']}" + (f", {u['count']} file(s) matching {u['glob']}" if u["glob"] else ""))
     L.append(f"bibliography: {', '.join(d['bibliography']) or 'none'}" + (f"; reference lists: {', '.join(d['reference_lists'])}" if d["reference_lists"] else ""))
@@ -450,12 +468,18 @@ def init(args):
             cfg.pop("guidelines", None)
     if args.goal:
         cfg["goal"] = args.goal
+    if args.journal:
+        cfg["recentWork"] = {"venue": args.journal, "months": args.recent_months, "count": [2, 3]}
+    elif "recentWork" in cfg:
+        cfg["recentWork"]["months"] = args.recent_months
+    if args.no_recent or cfg.get("publicationType") not in ("journal-article", "conference-paper", "survey"):
+        cfg.pop("recentWork", None)
     if args.size:
         cfg["committeeSize"] = args.size
     if args.effort and args.effort != "default":
         cfg["effort"] = args.effort
     order = ["name", "publicationType", "committeeSize", "effort", "goal", "guidelines", "context", "documents", "stages",
-             "sharedFiles", "bibliography", "referenceList", "checks", "commit"]
+             "sharedFiles", "bibliography", "referenceList", "recentWork", "checks", "commit"]
     cfg = {k: cfg[k] for k in order if k in cfg} | {k: v for k, v in cfg.items() if k not in order}
     out = os.path.join(root, args.out)
     if os.path.exists(out) and not args.force:
@@ -487,6 +511,9 @@ def main():
     q.add_argument("--guidelines", help="comma-separated guideline files; empty for none")
     q.add_argument("--main", help="the main document, if detection chose the wrong one")
     q.add_argument("--bib")
+    q.add_argument("--journal", help="target journal: the committee adds 2-3 related works it published recently")
+    q.add_argument("--recent-months", type=float, default=6, help="how far back to look in the journal (default 6)")
+    q.add_argument("--no-recent", action="store_true", help="do not add recent work from the target journal")
     q.add_argument("--name")
     q.add_argument("--out", default="writing-committee.json")
     q.add_argument("--force", action="store_true")
