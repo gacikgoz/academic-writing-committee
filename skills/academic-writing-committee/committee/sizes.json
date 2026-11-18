@@ -1,0 +1,44 @@
+{
+  "_comment": "Committee sizes. prepare_run.py applies the chosen size to the publication-type profile before the configuration: a reader, reviewer, editor list, limit or setting given explicitly in the configuration overrides the size. Readers are taken in the profile's order; lenses in the order of lensPriority (per type, else the default). See committee/config.md, field committeeSize.",
+  "default": "full",
+  "sizes": {
+    "low": {
+      "description": "Smallest committee: one reader, two lenses, the line editor, at most 2 rounds per unit, every role on Sonnet or below.",
+      "readers": 1,
+      "reviewers": 2,
+      "editors": ["line"],
+      "limits": { "maxRounds": 2, "maxGlobalRounds": 1, "maxRepairs": 1 },
+      "readBeforeBrief": false,
+      "modelCeiling": { "model": "sonnet", "except": [] },
+      "adaptRoster": false
+    },
+    "medium": {
+      "description": "Lean committee: one reader, three lenses, the line editor, at most 3 rounds per unit, every role on Opus or below except the Editor-in-Chief.",
+      "readers": 1,
+      "reviewers": 3,
+      "editors": ["line"],
+      "limits": { "maxRounds": 3, "maxGlobalRounds": 1, "maxRepairs": 1 },
+      "readBeforeBrief": false,
+      "modelCeiling": { "model": "opus", "except": ["globalChair"] },
+      "adaptRoster": false
+    },
+    "high": {
+      "description": "Most of the profile: two readers, five lenses, both editors, at most 4 rounds per unit, the default models.",
+      "readers": 2,
+      "reviewers": 5,
+      "editors": ["line", "consistency"],
+      "limits": { "maxRounds": 4, "maxGlobalRounds": 2 },
+      "readBeforeBrief": true,
+      "adaptRoster": true
+    },
+    "full": {
+      "description": "The whole profile of the publication type: every reader, lens and editor, its limits and the default models."
+    }
+  },
+  "lensPriority": {
+    "default": ["technical", "guidelines", "references", "claims", "experiments", "venue", "significance", "feasibility", "coverage", "pedagogy", "presentation", "language"],
+    "survey": ["coverage", "references", "claims", "technical", "venue", "presentation", "language"],
+    "grant-proposal": ["significance", "feasibility", "venue", "claims", "references", "language"],
+    "lecture-notes": ["technical", "pedagogy", "references", "presentation", "language"]
+  }
+}

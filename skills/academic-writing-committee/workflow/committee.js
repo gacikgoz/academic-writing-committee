@@ -664,7 +664,7 @@ Make the document consistent as a whole: apply justified shared change requests 
   }
   const units = docUnits()
   if (units.length > 1) {
-    const lens = REVIEWERS.find(r => r.key === 'claims') || { model: 'opus', effort: 'high' }
+    const lens = REVIEWERS.find(r => r.key === 'claims') || capped('reviewer:claims', { model: 'opus', effort: 'high' })
     await call(`${contract('Reviewer')}
 Global round ${g}: the cross-unit claims review. Your lens: the claims lens of roles.md, applied to the whole document. Units, in reading order: ${json(units.map(x => ({ id: x.id, files: x.files })))}.
 Build the cross-unit contribution map and the claim-evidence matrix of ${SKILL}/references/claims-and-coherence.md over the abstract, the introduction, each unit's opening and summary or conclusion, the discussion and the final conclusion. Every contribution, key number, term and scope statement must agree wherever it recurs, each claim must trace to evidence in some unit, the conclusion must add nothing new, and nothing may be overclaimed or undersold. Report each mismatch with both locations and the unit that should change. Write your review to ${gdir}/claims.md. Do not edit any other file: the report file is the one file you write, and writing it is part of your task (your structured return does not replace it).`,

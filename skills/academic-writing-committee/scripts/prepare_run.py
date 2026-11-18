@@ -237,6 +237,38 @@ def load_profile(cfg):
         return json.load(fh)
 
 
+def load_sizes():
+    with open(os.path.join(SKILL_DIR, "committee", "sizes.json"), encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def apply_size(cfg, profile, size=None):
+    """Scale the profile to a committee size (low, medium, high, full; committee/sizes.json).
+    The size changes the profile and fills in settings the configuration leaves out, so anything the
+    configuration states explicitly still wins. Returns the size name and the scaled profile."""
+    table = load_sizes()
+    name = size or cfg.get("committeeSize") or table.get("default", "full")
+    spec = table["sizes"].get(name)
+    if spec is None:
+        sys.exit(f"committeeSize: unknown size '{name}'; use one of {', '.join(table['sizes'])}")
+    profile = dict(profile)
+    if "readers" in spec:
+        profile["readers"] = (profile.get("readers") or [])[: spec["readers"]]
+    if "reviewers" in spec:
+        order = table["lensPriority"].get(cfg.get("publicationType"), table["lensPriority"]["default"])
+        rank = {k: i for i, k in enumerate(order)}
+        lenses = sorted(profile.get("reviewers") or [], key=lambda r: rank.get(r.get("key"), len(order)))
+        profile["reviewers"] = lenses[: spec["reviewers"]]
+    if "editors" in spec:
+        profile["editors"] = [e for e in (profile.get("editors") or []) if e.get("key") in spec["editors"]]
+    if "limits" in spec:
+        profile["limits"] = {**profile.get("limits", {}), **spec["limits"]}
+    for key in ("readBeforeBrief", "modelCeiling", "adaptRoster"):
+        if key in spec and key not in cfg:
+            cfg[key] = spec[key]
+    return name, profile
+
+
 def load_catalog():
     with open(os.path.join(SKILL_DIR, "committee", "catalog.json"), encoding="utf-8") as fh:
         return json.load(fh)
@@ -452,7 +484,8 @@ def per_unit_estimate(run_args):
     if run_args.get("reviewOnly"):
         return 3 + readers + reviewers
     editors = len(run_args.get("editors") or [1, 2])
-    later = run_args.get("limits", {}).get("laterRoundRounds", 2.5)
+    limits = run_args.get("limits", {})
+    later = min(limits.get("laterRoundRounds", 2.5), limits.get("maxRounds", 5))
     first_read = readers if run_args.get("readBeforeBrief", True) else 0
     return 1 + first_read + (3 + readers + reviewers) + max(0, later - 1) * 5 + editors + 1
 
@@ -469,6 +502,7 @@ def prepare(args):
     cfg, root, state = load_config(args.config)
     ledger = load_ledger(state)
     profile = load_profile(cfg)
+    size, profile = apply_size(cfg, profile, args.size)
     unitization = profile.get("unitization", "")
     if unitization == "whole-document" and not cfg.get("stages") and not cfg.get("documents"):
         print(f"warning: a {cfg['publicationType']} is judged as a whole; list its main file(s) in `documents`", file=sys.stderr)
@@ -607,6 +641,7 @@ def prepare(args):
         "name": cfg.get("name", os.path.basename(root)),
         "goal": cfg.get("goal") or profile.get("goal", ""),
         "publicationType": cfg.get("publicationType", ""),
+        "committeeSize": size,
         "publicationSection": profile.get("section", ""),
         "profileNote": profile.get("note", ""),
         "language": cfg.get("language", ""),
@@ -690,6 +725,10 @@ def prepare(args):
             json.dump(run_args, fh, indent=1)
         print(f"workflow arguments: {out}")
     print(f"workflow: {SKILL_DIR}/workflow/committee.js")
+    print(f"committee size: {run_args['committeeSize']}: {len(run_args.get('readers', []))} reader(s) "
+          f"({', '.join(r['key'] for r in run_args.get('readers', []))}), {len(run_args.get('reviewers', []))} lens(es) "
+          f"({', '.join(r['key'] for r in run_args.get('reviewers', []))}), editors: "
+          f"{', '.join(e['key'] for e in run_args.get('editors', [])) or 'none'}; at most {run_args['limits'].get('maxRounds', 5)} round(s) per unit")
     print(f"publication type: {run_args['publicationType']}; bibliography: {', '.join(run_args['bibliography']) or 'none found'}; extra writing references: {', '.join(run_args['writingSkills']) or 'none'}")
     for st in stages:
         sids = [u["id"] for u in st["units"]]
@@ -885,6 +924,8 @@ def main():
     ap.add_argument("--out")
     ap.add_argument("--record")
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--size", choices=["low", "medium", "high", "full"],
+                    help="committee size for this run (overrides committeeSize in the configuration; default full)")
     args = ap.parse_args()
     if args.record:
         record(args)

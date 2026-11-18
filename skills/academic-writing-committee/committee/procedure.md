@@ -62,8 +62,10 @@ Ask the user only for what you cannot infer (the venue, the scope, the deadline 
 ### 3. Prepare the Run
 
 ```bash
-python3 <skill>/scripts/prepare_run.py writing-committee.json [--stages a,b] [--units x,y] [--shards K]
+python3 <skill>/scripts/prepare_run.py writing-committee.json [--size low|medium|high|full] [--stages a,b] [--units x,y] [--shards K]
 ```
+
+The committee size (`committeeSize` in the configuration, or `--size` for one run) scales the profile's committee: `low` and `medium` for drafts, tight budgets or many units, `high` for most final revisions, `full` (the default) for the whole profile. If the user named a size ("a low committee", "medium committee"), pass it with `--size`; otherwise use the configuration's. Say the size in the plan you give the user.
 
 The script prepares everything the workflow needs:
 

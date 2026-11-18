@@ -35,6 +35,8 @@ Say once, at the start, that the run is without a committee.
 
 Review and committee runs use the Workflow tool, so they need the user's explicit request for a multi-agent run. A request to use this skill's committee or review mode counts as that request, unless it asks for no committee. State the plan and the expected number of agents before launching.
 
+**Committee size.** A committee run has four sizes: `low` (one reader, two lenses, the line editor, at most 2 rounds per unit, Sonnet or below), `medium` (one reader, three lenses, the line editor, at most 3 rounds, Opus or below except the Editor-in-Chief), `high` (two readers, five lenses, both editors, at most 4 rounds) and `full` (the whole profile of the publication type, the default). The user chooses it in words ("a medium committee"), with `--size` on the commands, or with `committeeSize` in the configuration; `prepare_run.py --size` applies it, and `committee/sizes.json` defines it.
+
 ## Publication Types
 
 Name the type, its primary judge, and the judge's decision before planning or revising. `references/publication-types.md` gives, for each type, its purpose and readers, structure, length, what judges look for, typical failures, and the committee configuration; `profiles/<type>.json` holds the committee defaults.
