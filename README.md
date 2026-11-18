@@ -7,7 +7,7 @@
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin%20%2B%20skill-8A63D2)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
-`academic-writing-committee` is a Claude Code plugin and a standalone skill for planning, drafting, revising, reviewing and checking academic documents: journal articles, conference papers, surveys, theses, books and book chapters, lecture notes, technical reports and grant proposals.
+`academic-writing-committee` is a Claude Code plugin and a standalone skill for planning, drafting, revising, reviewing and checking academic documents. It covers journal articles, conference papers, surveys, theses, books and book chapters, lecture notes, technical reports and grant proposals.
 
 It works in two ways:
 
@@ -21,14 +21,19 @@ It works in two ways:
 - [Quick Start](#quick-start)
 - [With or Without the Committee](#with-or-without-the-committee)
 - [Commands](#commands)
+- [Setup](#setup)
+  - [1. Requirements](#1-requirements)
+  - [2. Install](#2-install)
+  - [3. Check the Installation](#3-check-the-installation)
+  - [4. Set Up a Project for the Committee](#4-set-up-a-project-for-the-committee)
+  - [5. Run the Committee Step by Step](#5-run-the-committee-step-by-step)
+  - [6. What the Committee Keeps on Disk](#6-what-the-committee-keeps-on-disk)
+  - [7. Long Documents, Cost and Troubleshooting](#7-long-documents-cost-and-troubleshooting)
 - [What It Enforces](#what-it-enforces)
 - [How the Committee Works](#how-the-committee-works)
 - [Publication Types](#publication-types)
 - [The Checkers](#the-checkers)
-- [Setting Up a Project](#setting-up-a-project)
 - [Models and Cost](#models-and-cost)
-- [Installation Options](#installation-options)
-- [Requirements](#requirements)
 - [Status](#status)
 - [Repository Layout](#repository-layout)
 - [Sources and License](#sources-and-license)
@@ -59,6 +64,8 @@ Or start a mode directly with one of the [commands](#commands), for example:
 /academic-writing-committee:no-committee revise chapters/02-methods.tex thesis
 ```
 
+Writing, reviewing and checking without a committee need nothing more. To run the committee on a whole document, follow [Setup](#setup).
+
 ---
 
 ## With or Without the Committee
@@ -70,6 +77,7 @@ Or start a mode directly with one of the [commands](#commands), for example:
 | **Best for** | a section, a paper you are actively editing, a quick review, a citation audit | a whole paper, thesis or book brought up to a set of guidelines |
 | **Review** | one careful review by severity, no edits | parallel reader personas and reviewer lenses, consolidated by a chair |
 | **Revision of a whole document** | unit by unit in reading order, with both checkers and the build after each unit | tiered writers, independent judgment each round, escalation, editors, a regression check |
+| **Setup** | none | a configuration file, and ideally a guidelines file (see [Setup](#setup)) |
 | **Cost** | one session | about 18 to 35 agent calls per unit (see [Models and Cost](#models-and-cost)) |
 
 The writing guide, the standards and the checkers are the same in both. The committee adds independent judgment, escalation and memory across runs.
@@ -89,6 +97,206 @@ The plugin adds five commands. The standalone skill does everything they do when
 | `/academic-writing-committee:no-committee [write \| review \| check \| revise] [file or topic] [type] [instructions]` | Plain academic writing in any mode, in one session, with no subagents. |
 
 A committee run is a multi-agent run, so invoking `review` or `committee` without `--no-committee` counts as your agreement to one. Claude states the plan and the expected number of agents before it launches anything.
+
+---
+
+## Setup
+
+### 1. Requirements
+
+| You need | For |
+|---|---|
+| **Claude Code**, or another agent that loads `SKILL.md` skills | everything |
+| **Python 3.9 or later** (standard library only, nothing to `pip install`) | the checkers and `prepare_run.py` |
+| **The Workflow tool** in Claude Code | committee runs and committee reviews; without it the skill switches to the no-committee option |
+| **The models** Fable, Opus, Sonnet and Haiku, or overrides for any you lack ([§7](#7-long-documents-cost-and-troubleshooting)) | committee runs |
+| **git**, with the project in a repository | committee runs, which commit after each wave |
+| **Your build tools** (for example `latexmk` or `pandoc`) | the build checks you configure |
+| **Network access** to `api.crossref.org`, `export.arxiv.org`, `doi.org` and `api.datacite.org` | online reference verification (optional) |
+
+### 2. Install
+
+**As a plugin (Claude Code, with the commands):**
+
+```
+/plugin marketplace add gacikgoz/academic-writing-committee
+/plugin install academic-writing-committee@academic-writing-committee
+```
+
+- **Update:** `/plugin marketplace update academic-writing-committee`
+- **From a local clone:** `claude --plugin-dir path/to/academic-writing-committee`
+- **Earlier installs:** if you installed `academic-writing` or `academic-writing-committee@gacikgoz-plugins` from the `gacikgoz/aibook` marketplace, uninstall it first, so that only one copy of the skill competes for selection.
+
+**As a standalone skill (no plugin):** the folder [`skills/academic-writing-committee/`](skills/academic-writing-committee/) works on its own. Every path in it is relative to the folder.
+
+| Where | How |
+|---|---|
+| Claude Code, every project | `cp -r skills/academic-writing-committee ~/.claude/skills/` |
+| Claude Code, one project | `cp -r skills/academic-writing-committee <project>/.claude/skills/` |
+| claude.ai and other hosts that accept skill uploads | run `./package-skill.sh` and upload `dist/academic-writing-committee.zip` |
+| Other agents that read `SKILL.md` skills | place the folder where the agent looks for skills, or point it at `SKILL.md` |
+
+The standalone skill has every mode; only the slash commands come with the plugin.
+
+### 3. Check the Installation
+
+With the plugin, `/plugin` should show `academic-writing-committee` as installed, and typing `/academic-writing-committee:` should offer the five commands. With the standalone skill, ask Claude "Which skills can you use?" and look for `academic-writing-committee`.
+
+The scripts run without Claude, so they are a quick test of Python and of the network:
+
+```bash
+S=skills/academic-writing-committee/scripts   # or ~/.claude/skills/academic-writing-committee/scripts
+python3 $S/check_manuscript.py --list-rules
+python3 $S/check_manuscript.py your-draft.md
+python3 $S/check_citations.py your-draft.tex --bib refs.bib --online
+```
+
+If `--online` reports network errors, the checker still runs offline without the flag; for committee runs, set `"onlineCitations": false` (see [§7](#7-long-documents-cost-and-troubleshooting)).
+
+### 4. Set Up a Project for the Committee
+
+The committee needs a git repository, a configuration file and, ideally, a guidelines file. The `committee` command writes the configuration with you if it is missing and asks only for what it cannot infer. You can also write the files yourself.
+
+**a. Write the guidelines.** The guidelines are the committee's authority: the venue's author instructions, a house style, or your own rules (page limit, citation style, required sections, terms to use). Put them in a Markdown file such as `guidelines.md` or `venue-rules.md`. Number the rules if you can, so that reviews can cite them. Without a guidelines file, the skill's writing guide serves as the guidelines.
+
+**b. Write `writing-committee.json`** at the root of the project. For a paper judged as a whole:
+
+```json
+{
+  "name": "Robust Retrieval Under Distribution Shift",
+  "publicationType": "conference-paper",
+  "goal": "Make the paper ready for submission.",
+  "guidelines": ["venue-rules.md"],
+  "documents": ["paper.tex"],
+  "bibliography": "references.bib",
+  "checks": {
+    "unit": "latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=.writing-committee/build/{unit} {main}",
+    "global": ["latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=.writing-committee/build/full paper.tex"]
+  },
+  "commit": { "perWave": true, "push": false }
+}
+```
+
+For a book, thesis or lecture notes, use `stages` instead of `documents`. Each stage's `unitsFrom` glob makes one unit per chapter, for example `"glob": "chapters/*.tex"` with `"orderFrom": "main.tex"`. [`templates/book.example.json`](skills/academic-writing-committee/templates/book.example.json) is a complete example.
+
+The fields you will use most:
+
+| Field | What it sets |
+|---|---|
+| `publicationType` | **Required.** One of the [nine profiles](#publication-types); it chooses the readers, reviewer lenses, editors and limits. |
+| `goal` | What the whole effort must achieve. Every agent reads it, so state your priorities here (for example "keep the author's text; change a paragraph only where a rule requires it"). |
+| `guidelines`, `context` | Your rule files, and other files every agent should know (notation table, roadmap, earlier reviews). |
+| `documents` or `stages` | What is revised, as whole documents or as units per stage. |
+| `bibliography`, `referenceList` | A `.bib` or CSL JSON file, or a free-form reference list, checked in every round. |
+| `sharedFiles` | Files no unit may own (main file, preamble, shared bibliography); only the Integration Editor changes them. |
+| `checks.unit`, `checks.global` | Your build commands. `{unit}`, `{main}`, `{files}`, `{bib}` and `{skill}` are filled in. A unit check must be safe to run in parallel, so build into a directory named after `{unit}`. |
+| `dropReaders`, `dropReviewers`, `addReviewers` | Remove or add personas and lenses by key, for example `"dropReviewers": ["experiments"]` for a paper without experiments. |
+| `roster`, `modelCeiling` | Models and efforts per role, or one model as the ceiling for every role. |
+| `limits` | `maxRounds`, `maxGlobalRounds`, `waveSize`, `maxAgents` and `shards`. |
+| `commit` | `perWave`, `push`, and the remote `branch` to push to. |
+
+Every field is documented in [`committee/config.md`](skills/academic-writing-committee/committee/config.md). The committee adds both checkers to your unit and global checks by itself, so do not list them.
+
+**c. Run the preflight yourself once.** Commit or stash your own changes, so that the committee starts from a clean working tree. Run your unit check on one unit and your global check once; with LaTeX, a full build first also lets unit checks resolve references to the rest of the document. Fix a broken check command before any agent runs: every round depends on it.
+
+### 5. Run the Committee Step by Step
+
+The `committee` command does all of this for you. These are the steps it takes, for when you want to drive or inspect a run yourself (`S` is the skill's `scripts/` folder):
+
+1. **Preview the plan.** This writes the workflow arguments to `.writing-committee/run-args.json` and prints the units, their order and the estimated number of agent calls:
+   ```bash
+   python3 $S/prepare_run.py writing-committee.json
+   python3 $S/prepare_run.py writing-committee.json --stages chapters --units ch03,ch04
+   ```
+2. **Launch.** Ask Claude to run the committee, or to launch `workflow/committee.js` with the Workflow tool and the arguments in `run-args.json`. Watch the run with `/workflows`. It runs in the background, and Claude is notified when it ends.
+3. **Record the result.** Claude saves the workflow's result and merges it into the ledger:
+   ```bash
+   python3 $S/prepare_run.py writing-committee.json --record .writing-committee/result-1.json
+   ```
+4. **Check the state** at any time:
+   ```bash
+   python3 $S/prepare_run.py writing-committee.json --status
+   ```
+5. **Continue.** Run `prepare_run.py` again; it plans only what is still open. Unresolved units resume from their open actions, one writer tier higher. When every unit is accepted, a `--global-only` run judges the whole document, and the Editor-in-Chief approves it or reopens units.
+6. **Decide where needed.** A unit that stays unresolved at the strongest tier, or fails twice, is listed under "NEEDS A HUMAN DECISION". Read its open actions, decide, then plan it again with `--include-stalled`.
+7. **Read the proposals.** `.writing-committee/guideline_proposals.md` collects gaps the committee found in your guidelines. The committee never edits the guidelines; you decide.
+
+Other useful options:
+
+| Option | Use |
+|---|---|
+| `--review-only` | One round of independent review with a report, and no edits. |
+| `--plan-only` | Only the first reading and the developmental briefs; it edits nothing, so it can run beside other work. |
+| `--shards K` | Divide the units among K workflows that run side by side ([§7](#7-long-documents-cost-and-troubleshooting)). |
+| `--no-global`, `--global-only` | Leave the whole-document rounds to a later run, or run only those rounds. |
+| `--max-units N` | Plan at most N units in this run. |
+
+### 6. What the Committee Keeps on Disk
+
+Everything lives in the state directory, `.writing-committee/` by default (`stateDir` in the configuration). `prepare_run.py` adds the working files to `.gitignore` on its first run.
+
+| Path | What it holds | In git |
+|---|---|---|
+| `ledger.json` | the state of every unit: accepted, open actions, writer tier, rounds | yes |
+| `lessons.md`, `lint_rules.md` | what the committee learned; every later agent reads them | yes |
+| `guideline_proposals.md` | proposed changes to your guidelines, for you to decide | yes |
+| `roster.json` | learned model changes (only when `adaptRoster` is on) | yes |
+| `units/<unit>/` | briefs, reader, reviewer and chair reports, writer change reports | no |
+| `build/` | private build directories for unit and global checks | no |
+| `run-args*.json`, `result-*.json` | the arguments and results of runs | no |
+| `citations-cache.json` | the cache of online reference lookups | no |
+
+Keep the ledger and the lessons in git: they are how the next run, or the next person, continues. The reports in `units/` can be large; archive them if you need to keep them.
+
+### 7. Long Documents, Cost and Troubleshooting
+
+**More agents at once.** A single workflow runs only a few agents at a time: min(16, CPUs − 2), which is 2 on a 4-CPU machine. For a long document, `--shards K` divides the units among K workflows, each committing only its own files. Record every shard when it ends, then prepare once more for the units still open and for the global rounds. Builds set the limit, not agents: give a full-document build a CPU of its own.
+
+**Many parallel LaTeX builds.** Each XeLaTeX or LuaLaTeX run can take a few hundred megabytes. With many shards, cap the concurrent runs with a small wrapper in front of the real binary, for example:
+
+```bash
+#!/bin/bash
+# /usr/local/bin/xelatex: at most N XeLaTeX runs at a time
+N=${XELATEX_SLOTS:-8}; REAL=/usr/bin/xelatex
+while true; do
+  for i in $(seq 1 "$N"); do
+    exec 9>"/tmp/xelatex-slot-$i.lock"
+    if flock -n 9; then "$REAL" "$@"; exit $?; fi
+    exec 9>&-
+  done
+  sleep 2
+done
+```
+
+**A lean, cheaper run.** For a book, keep one reader, three lenses and the line editor, and cap the rounds:
+
+```json
+{
+  "dropReaders": ["expert", "chapter-skimmer"],
+  "dropReviewers": ["claims", "pedagogy", "presentation", "language"],
+  "dropEditors": ["consistency"],
+  "readBeforeBrief": false,
+  "limits": { "maxRounds": 3, "maxGlobalRounds": 1 },
+  "modelCeiling": { "model": "opus", "except": ["globalChair"] },
+  "adaptRoster": false
+}
+```
+
+That roster runs at about 18 agent calls per unit, against about 25 to 35 with the defaults.
+
+**Troubleshooting:**
+
+| Symptom | What to do |
+|---|---|
+| The committee does not start, or Claude revises alone | The Workflow tool is not available in this session, so the skill fell back to the no-committee option. Use a Claude Code session with the Workflow tool, or keep working without a committee. |
+| A model of the roster is not available | Set `modelCeiling`, or override the roles in `roster` and the `model` of each reader, reviewer and editor ([`committee/models.md`](skills/academic-writing-committee/committee/models.md)). |
+| `prepare_run.py` exits with status 2 | There is nothing to do: every unit in scope is accepted. Use `--global-only` for the whole-document rounds, or `--include-accepted` to revise again. |
+| A run stopped part-way | Relaunch it with the same arguments and `resumeFromRunId`, so that finished agents replay from the cache. If the session itself was lost, `prepare_run.py` rebuilds the plan from the ledger and the committed files. |
+| No network, or online lookups time out | Set `"onlineCitations": false`. The references lens then verifies by search and reports what it cannot confirm. |
+| Unit checks fail on references to other units | Run a full build first, so that unit builds can resolve those references, or say in `checks.notes` how your build resolves them. |
+| Memory runs out during builds | Fewer shards, or a wrapper that caps concurrent builds (above). |
+
+The full procedure is in [`committee/procedure.md`](skills/academic-writing-committee/committee/procedure.md).
 
 ---
 
@@ -129,11 +337,11 @@ The guide rests on twelve principles and four standards that reviewers raise aga
 
 - **Units never collide.** Units that run in parallel never share a file. Shared files change only through the Integration Editor, who works alone.
 - **Writers escalate.** A unit that keeps failing moves to a stronger writer. A unit still unresolved at the strongest tier stops and asks you.
-- **The committee learns.** Recurring problems become lessons and lint rules that every later agent reads. Gaps in your guidelines become proposals for you. The committee never edits the guidelines itself.
+- **The committee learns.** Recurring problems become lessons and lint rules that every later agent reads. Gaps in your guidelines become proposals for you.
 - **Edits stay safe.** Editors only reword, and a regression check after acceptance rejects any new or changed claim.
-- **Runs resume.** A ledger records every unit's state. An interrupted run picks up from the open actions, and long documents can be split into shards that run side by side.
+- **Runs resume.** The ledger records every unit's state, so an interrupted run picks up from the open actions.
 
-The full procedure is in [`committee/procedure.md`](skills/academic-writing-committee/committee/procedure.md). The role contracts are in [`committee/roles.md`](skills/academic-writing-committee/committee/roles.md), and the severity scale and acceptance gates in [`committee/quality-gates.md`](skills/academic-writing-committee/committee/quality-gates.md).
+The role contracts are in [`committee/roles.md`](skills/academic-writing-committee/committee/roles.md), and the severity scale and acceptance gates in [`committee/quality-gates.md`](skills/academic-writing-committee/committee/quality-gates.md).
 
 ---
 
@@ -141,17 +349,17 @@ The full procedure is in [`committee/procedure.md`](skills/academic-writing-comm
 
 Each type has a profile that sets how the document is divided and who judges it.
 
-| Type | Unit of work | Readers | Reviewer lenses |
+| Type (`publicationType`) | Unit of work | Readers | Reviewer lenses |
 |---|---|---|---|
-| Journal article | whole document | expert, adjacent-field reader | technical, claims, experiments, significance, references, presentation, language, venue |
-| Conference paper | whole document | program-committee reviewer, expert, skimmer | technical, claims, experiments, significance, references, presentation, language, venue |
-| Survey | whole document | newcomer, expert, practitioner | coverage, claims, references, technical, presentation, language, venue |
-| Thesis | chapter | examiner, expert, generalist | guidelines, technical, claims, experiments, references, presentation, language |
-| Book | chapter | newcomer, expert, chapter skimmer | guidelines, technical, claims, pedagogy, presentation, references, language |
-| Book chapter | whole document | newcomer, expert | guidelines, technical, claims, references, presentation, language |
-| Lecture notes | chapter | newcomer, chapter skimmer | technical, pedagogy, presentation, language, references |
-| Technical report | whole document | practitioner, expert | technical, claims, references, presentation, language |
-| Grant proposal | whole document | panel generalist, specialist | venue, significance, feasibility, claims, references, language |
+| Journal article (`journal-article`) | whole document | expert, adjacent-field reader | technical, claims, experiments, significance, references, presentation, language, venue |
+| Conference paper (`conference-paper`) | whole document | program-committee reviewer, expert, skimmer | technical, claims, experiments, significance, references, presentation, language, venue |
+| Survey (`survey`) | whole document | newcomer, expert, practitioner | coverage, claims, references, technical, presentation, language, venue |
+| Thesis (`thesis`) | chapter | examiner, expert, generalist | guidelines, technical, claims, experiments, references, presentation, language |
+| Book (`book`) | chapter | newcomer, expert, chapter skimmer | guidelines, technical, claims, pedagogy, presentation, references, language |
+| Book chapter (`book-chapter`) | whole document | newcomer, expert | guidelines, technical, claims, references, presentation, language |
+| Lecture notes (`lecture-notes`) | chapter | newcomer, chapter skimmer | technical, pedagogy, presentation, language, references |
+| Technical report (`technical-report`) | whole document | practitioner, expert | technical, claims, references, presentation, language |
+| Grant proposal (`grant-proposal`) | whole document | panel generalist, specialist | venue, significance, feasibility, claims, references, language |
 
 Every type also gets a developmental editor, a committee chair, line and consistency editors, a regression checker, an integration editor and an editor-in-chief. A document with several units also gets a cross-unit claims review in every global round. A project can add or drop any reader or lens by its key in [`committee/catalog.json`](skills/academic-writing-committee/committee/catalog.json).
 
@@ -175,31 +383,10 @@ python3 $S/check_citations.py paper.tex --bib refs.bib --online --cache refs-cac
 python3 $S/check_citations.py --reference-list references.tex --online
 ```
 
-- **`check_manuscript.py`** flags dash and hyphen misuse, chains of *and*, repeated words, phrases and sentence openings, stacked hedges, overclaiming and underselling words, formulaic phrasing, very long sentences, and references to unknown labels. Run `--list-rules` to see every rule.
-- **`check_citations.py`** finds missing and unused keys, duplicates, missing fields and malformed identifiers. With `--online` it looks every reference up at Crossref, arXiv, doi.org and DataCite. It reports identifiers that do not exist (`NOT_FOUND`) and records whose metadata do not match (`METADATA_MISMATCH`). With `--ledger sources.csv` it compares the cited keys with a source ledger.
+- **`check_manuscript.py`** flags dash and hyphen misuse, chains of *and*, repeated words, phrases and sentence openings, stacked hedges, overclaiming and underselling words, formulaic phrasing, very long sentences, and references to unknown labels. Run `--list-rules` to see every rule, and `--disable RULE` or `--allow-terms` to tune it.
+- **`check_citations.py`** finds cited keys missing from the bibliography, entries never cited, duplicates, missing fields and malformed identifiers. With `--online` it looks every reference up at Crossref, arXiv, doi.org and DataCite. It reports identifiers that do not exist (`NOT_FOUND`) and records whose metadata do not match (`METADATA_MISMATCH`). With `--ledger sources.csv` it compares the cited keys with a source ledger.
 
 Both reports list candidates for a person to judge. A clean report proves nothing, and the checker cannot tell whether a work supports the sentence that cites it, so open each reference.
-
----
-
-## Setting Up a Project
-
-The committee reads `writing-committee.json` at the root of your project. A conference paper needs little more than this:
-
-```json
-{
-  "name": "Robust Retrieval Under Distribution Shift",
-  "publicationType": "conference-paper",
-  "goal": "Make the paper ready for submission.",
-  "guidelines": ["venue-rules.md"],
-  "documents": ["paper.tex"]
-}
-```
-
-A book or thesis lists `stages` whose `unitsFrom` globs make one unit per chapter, with the commands that build and check it. If your project has no configuration, the `committee` command writes one with you and asks only for what it cannot infer.
-
-- Complete examples: [`templates/`](skills/academic-writing-committee/templates/) (a book and a conference paper)
-- Every field: [`committee/config.md`](skills/academic-writing-committee/committee/config.md)
 
 ---
 
@@ -214,45 +401,7 @@ The committee gives each task enough capability and no more. The defaults:
 | Briefs, hard writers, the chair, the technical and claims lenses, the integration editor | Opus |
 | Critical units, escalated writers, the editor-in-chief | Fable |
 
-A unit costs about 25 to 35 agent calls with the default roster, and a run is capped at about 900. For a lean run, drop readers or lenses, lower `limits.maxRounds`, or cap every role at one model with `modelCeiling`. One book project ran at about 18 calls per unit with one reader, three lenses and one editor. `prepare_run.py` prints its estimate before anything starts.
-
-Defaults, escalation paths and the reasoning behind them are in [`committee/models.md`](skills/academic-writing-committee/committee/models.md).
-
----
-
-## Installation Options
-
-### Plugin (Claude Code, with Commands)
-
-```
-/plugin marketplace add gacikgoz/academic-writing-committee
-/plugin install academic-writing-committee@academic-writing-committee
-```
-
-- **Update:** `/plugin marketplace update academic-writing-committee`
-- **Local clone:** `claude --plugin-dir path/to/academic-writing-committee`
-- **Earlier installs:** if you installed `academic-writing` or `academic-writing-committee@gacikgoz-plugins` from the `gacikgoz/aibook` marketplace, uninstall it first, so that only one copy of the skill competes for selection.
-
-### Standalone Skill (No Plugin)
-
-The folder [`skills/academic-writing-committee/`](skills/academic-writing-committee/) works on its own. Every path in it is relative to the folder, and its scripts need only Python.
-
-| Where | How |
-|---|---|
-| Claude Code, every project | copy the folder to `~/.claude/skills/academic-writing-committee/` |
-| Claude Code, one project | copy it to `<project>/.claude/skills/academic-writing-committee/` |
-| claude.ai and other hosts that accept skill uploads | run `./package-skill.sh` and upload `dist/academic-writing-committee.zip` |
-| Other agents that read `SKILL.md` skills | place the folder where the agent looks for skills, or point it at `SKILL.md` |
-
-The standalone skill has every mode; only the slash commands come with the plugin.
-
----
-
-## Requirements
-
-- **Claude Code**, or any agent that loads `SKILL.md` skills. The committee runs as a Workflow, so it needs the Workflow tool; without it, the skill uses the no-committee option.
-- **Python 3.9 or later** for the scripts, and network access for `check_citations.py --online`.
-- **For the committee:** the models of the roster (Fable, Opus, Sonnet, Haiku), or overrides in your configuration for any you lack; `git`, because the committee commits after each wave; and your project's own build tools for its checks.
+A unit costs about 25 to 35 agent calls with the default roster, and a run is capped at about 900. The [lean roster](#7-long-documents-cost-and-troubleshooting) brings it to about 18. `prepare_run.py` prints its estimate before anything starts. Defaults, escalation paths and the reasoning behind them are in [`committee/models.md`](skills/academic-writing-committee/committee/models.md).
 
 ---
 
