@@ -3,7 +3,7 @@
 **Academic writing for Claude that holds every sentence to the standard of a careful editor, and can put a whole committee of readers, reviewers and editors behind it when it matters.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Version 2.1.0](https://img.shields.io/badge/version-2.1.0-informational)
+![Version 2.2.0](https://img.shields.io/badge/version-2.2.0-informational)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin%20%2B%20skill-8A63D2)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -33,6 +33,7 @@ It works in two ways:
 - [How the Committee Works](#how-the-committee-works)
 - [Publication Types and Committee Size](#publication-types-and-committee-size)
   - [Committee Modes: Low, Medium, High, Full](#committee-modes-low-medium-high-full)
+  - [Effort](#effort)
 - [The Checkers](#the-checkers)
 - [Models and Cost](#models-and-cost)
 - [Status](#status)
@@ -57,7 +58,7 @@ Revise the introduction of paper.tex for a NeurIPS submission, no committee.
 Check every reference in thesis/chapter3.tex against refs.bib.
 Review proposal.md as an NSF panel would, without a committee.
 Run the committee on paper.tex as a conference paper until everything is approved.
-Run a medium committee on the thesis chapters in writing-committee.json.
+Run a medium committee at high effort on the thesis chapters in writing-committee.json.
 ```
 
 Or start a mode directly with one of the [commands](#commands), for example:
@@ -93,8 +94,8 @@ The plugin adds five commands. The standalone skill does everything they do when
 | Command | What it does |
 |---|---|
 | `/academic-writing-committee:write [file or topic] [type] [instructions]` | Writes or revises text to the standard of the guide, then runs both checkers on what changed. Always a single session. |
-| `/academic-writing-committee:review [--no-committee \| --size low\|medium\|high\|full] [main file] [type] [venue]` | Reviews a document without changing it. Readers and reviewer lenses work in parallel and a chair writes a prioritized report. With `--no-committee`, Claude reviews it alone. |
-| `/academic-writing-committee:committee [--no-committee \| --size low\|medium\|high\|full] [configuration] [stages or units]` | Runs the committee until every unit and the whole document are approved, or until a unit needs your decision. `--size` picks the [committee mode](#committee-modes-low-medium-high-full). With `--no-committee`, Claude revises the document unit by unit in one session. |
+| `/academic-writing-committee:review [--no-committee \| --size low\|medium\|high\|full] [--effort low\|medium\|high\|xhigh\|max] [main file] [type] [venue]` | Reviews a document without changing it. Readers and reviewer lenses work in parallel and a chair writes a prioritized report. With `--no-committee`, Claude reviews it alone. |
+| `/academic-writing-committee:committee [--no-committee \| --size low\|medium\|high\|full] [--effort low\|medium\|high\|xhigh\|max] [configuration] [stages or units]` | Runs the committee until every unit and the whole document are approved, or until a unit needs your decision. `--size` picks the [committee mode](#committee-modes-low-medium-high-full) and `--effort` the [effort](#effort); Claude asks for the effort if you give none. With `--no-committee`, Claude revises the document unit by unit in one session. |
 | `/academic-writing-committee:check [files] [bibliography]` | Runs the manuscript and citation checkers and proposes fixes. Always a single session. |
 | `/academic-writing-committee:no-committee [write \| review \| check \| revise] [file or topic] [type] [instructions]` | Plain academic writing in any mode, in one session, with no subagents. |
 
@@ -168,6 +169,7 @@ The committee needs a git repository, a configuration file and, ideally, a guide
   "name": "Robust Retrieval Under Distribution Shift",
   "publicationType": "conference-paper",
   "committeeSize": "high",
+  "effort": "high",
   "goal": "Make the paper ready for submission.",
   "guidelines": ["venue-rules.md"],
   "documents": ["paper.tex"],
@@ -188,6 +190,7 @@ The fields you will use most:
 |---|---|
 | `publicationType` | **Required.** One of the [nine profiles](#choosing-the-type); it chooses the readers, reviewer lenses, editors and limits. |
 | `committeeSize` | `low`, `medium`, `high` or `full` (default): how large the committee is ([Committee Modes](#committee-modes-low-medium-high-full)). `--size` overrides it for one run. |
+| `effort` | `low`, `medium`, `high`, `xhigh`, `max` or `default`: the effort of every role ([Effort](#effort)). Claude asks for it if it is missing; `--effort` overrides it for one run. |
 | `goal` | What the whole effort must achieve. Every agent reads it, so state your priorities here (for example "keep the author's text; change a paragraph only where a rule requires it"). |
 | `guidelines`, `context` | Your rule files, and other files every agent should know (notation table, roadmap, earlier reviews). |
 | `documents` or `stages` | What is revised, as whole documents or as units per stage. |
@@ -272,7 +275,7 @@ while true; do
 done
 ```
 
-**A cheaper run.** Choose a smaller [committee mode](#committee-modes-low-medium-high-full): `"committeeSize": "medium"` in the configuration, or `--size medium` for one run. Medium keeps one reader, three lenses and the line editor, caps the rounds at 3 and keeps every role at Opus or below except the Editor-in-Chief. That is about 18 agent calls per unit, against 24 to 28 with `full`. `low` goes down to about 14.
+**A cheaper run.** Choose a smaller [committee mode](#committee-modes-low-medium-high-full): `"committeeSize": "medium"` in the configuration, or `--size medium` for one run. Medium keeps one reader, three lenses and the line editor, caps the rounds at 3 and keeps every role at Opus or below, the Editor-in-Chief included. That is about 18 agent calls per unit, against 24 to 28 with `full`. `low` goes down to about 14. A lower [effort](#effort) cuts the tokens each call uses.
 
 **Troubleshooting:**
 
@@ -380,18 +383,22 @@ A unit can be marked `standard`, `hard` or `critical` in the configuration. Crit
 
 The committee runs in four sizes. Choose one with `committeeSize` in the configuration, with `--size` on the `committee` and `review` commands, or in words ("run a medium committee on paper.tex"). The default is `full`.
 
-| Mode | Readers | Lenses | Editors | Rounds per unit (max) | Global rounds | Models | Agent calls per unit | Review only | Use it for |
-|---|---|---|---|---|---|---|---|---|---|
-| `low` | 1 | 2 | line | 2 | 1 | every role at Sonnet or below | ~14 | ~6 | drafts, quick passes, many units on a tight budget |
-| `medium` | 1 | 3 | line | 3 | 1 | Opus or below; Editor-in-Chief on Fable | ~18 | ~7 | long documents where writing comes first |
-| `high` | 2 | 5 | line, consistency | 4 | 2 | default roster | ~24 | ~10 | most final revisions |
-| `full` | all of the profile | all of the profile | line, consistency | 5 or 6 | 2 | default roster | ~24 to 28 | ~10 to 14 | submissions and defenses where every lens counts |
+| Mode | Readers | Lenses | Editors | Writer ladder | Rounds per unit (max) | Global rounds | Models | Agent calls per unit | Review only | Use it for |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `low` | 1 | 2 | line | 2 tiers: Sonnet → Sonnet⁺ | 2 | 1 | every role on Sonnet or below | ~14 | ~6 | drafts, quick passes, many units on a tight budget |
+| `medium` | 1 | 3 | line | 3 tiers: Sonnet → Opus → Opus⁺ | 3 | 1 | every role on Opus or below, the Editor-in-Chief included | ~18 | ~7 | long documents where writing comes first |
+| `high` | 2 | 5 | line, consistency | 4 tiers: Sonnet → Opus → Fable → Fable⁺ | 4 | 2 | default roster | ~24 | ~10 | most final revisions |
+| `full` | all of the profile | all of the profile | line, consistency | 4 tiers: Sonnet → Opus → Fable → Fable⁺ | 5 or 6 | 2 | default roster | ~24 to 28 | ~10 to 14 | submissions and defenses where every lens counts |
+
+⁺ The last tier runs one effort level higher than the others, so escalating to it still adds effort when the model stays the same.
+
+**Writers.** Each unit has one writer per round, so a unit makes at most as many writer calls as its round limit (plus a repair if a check fails after acceptance). The writer starts on the tier the unit's difficulty sets: `standard` on the first, `hard` on the second, `critical` on the third, never past the last. It climbs one tier when the chair asks for it or the same problems repeat for two rounds. A unit still unresolved on the last tier stops and asks you. How many writers work at the same moment depends on the wave size of the type (4 units for whole-document types, 6 for chapter types) and on how many agents the machine runs at once ([§7](#7-long-documents-cost-and-troubleshooting)).
 
 - **Readers** are kept in the profile's order, so `low` and `medium` keep the type's main reader: the newcomer for a book, the program-committee reviewer for a conference paper, the examiner for a thesis.
 - **Lenses** are kept in order of how expensive the errors they catch are: technical, guidelines, references, claims, experiments, venue, and then the rest. A survey starts with coverage, a grant proposal with significance and feasibility, lecture notes with technical and pedagogy.
-- **The smaller modes** read the text first only in the writer's brief (`readBeforeBrief` off) and keep the roster fixed (`adaptRoster` off).
+- **The smaller modes** skip the readers' first reading before the brief (`readBeforeBrief` off), so readers start with the first revision, and they keep the roster fixed (`adaptRoster` off).
 - **Lecture notes and technical reports** have only two readers and five lenses, so `high` gives them the same committee as `full`, with a lower round limit.
-- **Anything you set explicitly wins.** A `medium` committee with `"addReviewers": ["language"]` has four lenses, and `"limits": {"maxRounds": 5}` gives it five rounds.
+- **Anything you set explicitly wins.** A `medium` committee with `"addReviewers": ["language"]` has four lenses, `"limits": {"maxRounds": 5}` gives it five rounds, and `roster.writerTiers` replaces its writer ladder.
 
 Which personas and lenses each mode keeps, for every type:
 
@@ -408,6 +415,23 @@ Which personas and lenses each mode keeps, for every type:
 | Grant proposal | generalist · significance, feasibility | generalist · significance, feasibility, venue | generalist, specialist · significance, feasibility, venue, claims, references |
 
 The modes are defined in [`committee/sizes.json`](skills/academic-writing-committee/committee/sizes.json); edit it to change them for every project.
+
+### Effort
+
+Before the first committee run, Claude asks you which **effort level** the committee should work at, unless you already gave one. Answer in words, pass `--effort` to the `committee` or `review` command, or set `effort` in the configuration. Claude never picks one for you.
+
+| Effort | What it means |
+|---|---|
+| `low` | quick, shallow passes; cheapest |
+| `medium` | careful enough for drafts and routine sections |
+| `high` | careful work on every role; recommended for most revisions |
+| `xhigh` | deeper reasoning on every role, for hard mathematics, proofs and dense arguments |
+| `max` | the most thorough and the most expensive; for a short, critical document |
+| `default` | each role keeps its own effort from the profile (for example the chair at high, the line editor at high, the consistency editor at medium) |
+
+- The level applies to every role except the mechanical checker and the committer, which stay at `low`: running a build and reading its log needs no deliberation.
+- The last writer tier runs one level higher (`high` gives the last writer `xhigh`).
+- Effort and mode are independent: a `medium` committee at `xhigh` has few members who think hard, and a `full` committee at `medium` has many members who work quickly. More effort means more tokens and slower runs, not more agent calls.
 
 ### Committee Size
 
@@ -468,7 +492,7 @@ The committee gives each task enough capability and no more. The defaults:
 | Mechanical checks, commits, skimming reader | Haiku |
 | Most readers and reviewer lenses, standard writers, line and consistency editors | Sonnet |
 | Briefs, hard writers, the chair, the technical and claims lenses, the integration editor | Opus |
-| Critical units, escalated writers, the editor-in-chief | Fable |
+| Critical units, escalated writers, the editor-in-chief (in the `high` and `full` modes) | Fable |
 
 A unit costs about 24 to 28 agent calls in the default `full` mode, depending on the type ([Committee Size](#committee-size)), and a run is capped at about 900. The smaller [modes](#committee-modes-low-medium-high-full) bring it to about 24 (`high`), 18 (`medium`) or 14 (`low`). `prepare_run.py` prints its estimate before anything starts. Defaults, escalation paths and the reasoning behind them are in [`committee/models.md`](skills/academic-writing-committee/committee/models.md).
 
@@ -476,7 +500,7 @@ A unit costs about 24 to 28 agent calls in the default `full` mode, depending on
 
 ## Status
 
-Version 2.1.0. The writing guide, the checkers, the no-committee option and the four committee modes are complete. The committee has run end to end on a small sample project. It is also being used, in the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
+Version 2.2.0. The writing guide, the checkers, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
 
 ---
 

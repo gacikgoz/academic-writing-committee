@@ -121,6 +121,26 @@ if (CEIL) {
   }
 }
 
+// Run effort (configuration `effort`, prepare_run.py --effort; the user chooses it): every role runs at it,
+// except the mechanical checker and the committer, which keep their own effort. The last writer tier runs
+// one level higher, so that escalating to it still adds effort when the model stays the same.
+const EFFORT = EFFORTS.includes(A.effort) ? A.effort : null
+if (EFFORT) {
+  const up = EFFORTS[Math.min(EFFORTS.length - 1, EFFORTS.indexOf(EFFORT) + 1)]
+  const at = (v, e) => (v ? { ...v, effort: e } : v)
+  for (const k of Object.keys(R)) {
+    if (k === 'checker' || k === 'committer') continue
+    if (k === 'writerTiers') R.writerTiers = R.writerTiers.map((t, i, all) => at(t, all.length > 1 && i === all.length - 1 ? up : EFFORT))
+    else R[k] = at(R[k], EFFORT)
+  }
+  for (const xs of [READERS, REVIEWERS, EDITORS]) {
+    xs.forEach((x, i) => {
+      xs[i] = at(x, EFFORT)
+      if (x.critical) xs[i].critical = at(x.critical, EFFORT)
+    })
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Schemas
 // ---------------------------------------------------------------------------
@@ -664,7 +684,7 @@ Make the document consistent as a whole: apply justified shared change requests 
   }
   const units = docUnits()
   if (units.length > 1) {
-    const lens = REVIEWERS.find(r => r.key === 'claims') || capped('reviewer:claims', { model: 'opus', effort: 'high' })
+    const lens = REVIEWERS.find(r => r.key === 'claims') || capped('reviewer:claims', { model: 'opus', effort: EFFORT || 'high' })
     await call(`${contract('Reviewer')}
 Global round ${g}: the cross-unit claims review. Your lens: the claims lens of roles.md, applied to the whole document. Units, in reading order: ${json(units.map(x => ({ id: x.id, files: x.files })))}.
 Build the cross-unit contribution map and the claim-evidence matrix of ${SKILL}/references/claims-and-coherence.md over the abstract, the introduction, each unit's opening and summary or conclusion, the discussion and the final conclusion. Every contribution, key number, term and scope statement must agree wherever it recurs, each claim must trace to evidence in some unit, the conclusion must add nothing new, and nothing may be overclaimed or undersold. Report each mismatch with both locations and the unit that should change. Write your review to ${gdir}/claims.md. Do not edit any other file: the report file is the one file you write, and writing it is part of your task (your structured return does not replace it).`,

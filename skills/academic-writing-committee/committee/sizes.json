@@ -1,38 +1,41 @@
 {
-  "_comment": "Committee sizes. prepare_run.py applies the chosen size to the publication-type profile before the configuration: a reader, reviewer, editor list, limit or setting given explicitly in the configuration overrides the size. Readers are taken in the profile's order; lenses in the order of lensPriority (per type, else the default). See committee/config.md, field committeeSize.",
+  "_comment": "Committee sizes. prepare_run.py applies the chosen size to the publication-type profile before the configuration: a reader, reviewer, editor list, limit, roster entry or setting given explicitly in the configuration overrides the size. Readers are taken in the profile's order; lenses in the order of lensPriority (per type, else the default). writerTiers lists the models of the writer ladder: a unit starts on the tier its difficulty sets (standard the first, hard the second, critical the third, never past the last) and climbs one tier when the chair asks for it or problems repeat; the last tier runs one effort level higher than the others. The effort of every role comes from the run's effort setting (committee/config.md, field effort). See committee/config.md, field committeeSize.",
   "default": "full",
   "sizes": {
     "low": {
-      "description": "Smallest committee: one reader, two lenses, the line editor, at most 2 rounds per unit, every role on Sonnet or below.",
+      "description": "Smallest committee: one reader, two lenses, the line editor, at most 2 rounds per unit, a two-tier Sonnet writer ladder, every role on Sonnet or below.",
       "readers": 1,
       "reviewers": 2,
       "editors": ["line"],
+      "writerTiers": ["sonnet", "sonnet"],
       "limits": { "maxRounds": 2, "maxGlobalRounds": 1, "maxRepairs": 1 },
       "readBeforeBrief": false,
       "modelCeiling": { "model": "sonnet", "except": [] },
       "adaptRoster": false
     },
     "medium": {
-      "description": "Lean committee: one reader, three lenses, the line editor, at most 3 rounds per unit, every role on Opus or below except the Editor-in-Chief.",
+      "description": "Lean committee: one reader, three lenses, the line editor, at most 3 rounds per unit, a three-tier writer ladder (Sonnet, Opus, Opus), every role on Opus or below, the Editor-in-Chief included.",
       "readers": 1,
       "reviewers": 3,
       "editors": ["line"],
+      "writerTiers": ["sonnet", "opus", "opus"],
       "limits": { "maxRounds": 3, "maxGlobalRounds": 1, "maxRepairs": 1 },
       "readBeforeBrief": false,
-      "modelCeiling": { "model": "opus", "except": ["globalChair"] },
+      "modelCeiling": { "model": "opus", "except": [] },
       "adaptRoster": false
     },
     "high": {
-      "description": "Most of the profile: two readers, five lenses, both editors, at most 4 rounds per unit, the default models.",
+      "description": "Most of the profile: two readers, five lenses, both editors, at most 4 rounds per unit, the full four-tier writer ladder and the default models.",
       "readers": 2,
       "reviewers": 5,
       "editors": ["line", "consistency"],
+      "writerTiers": ["sonnet", "opus", "fable", "fable"],
       "limits": { "maxRounds": 4, "maxGlobalRounds": 2 },
       "readBeforeBrief": true,
       "adaptRoster": true
     },
     "full": {
-      "description": "The whole profile of the publication type: every reader, lens and editor, its limits and the default models."
+      "description": "The whole profile of the publication type: every reader, lens and editor, its limits, the four-tier writer ladder and the default models."
     }
   },
   "lensPriority": {

@@ -67,6 +67,8 @@ python3 <skill>/scripts/prepare_run.py writing-committee.json [--size low|medium
 
 The committee size (`committeeSize` in the configuration, or `--size` for one run) scales the profile's committee: `low` and `medium` for drafts, tight budgets or many units, `high` for most final revisions, `full` (the default) for the whole profile. If the user named a size ("a low committee", "medium committee"), pass it with `--size`; otherwise use the configuration's. Say the size in the plan you give the user.
 
+**Ask the user for the effort before the first run.** Unless the request, the command (`--effort`) or the configuration (`effort`) already gives it, ask which effort level the committee should use: `low`, `medium`, `high` (recommended), `xhigh`, `max`, or `default` (each role keeps its own). Ask in one question, together with the size if that is open too, and pass the answer with `--effort` to this run and every later run of the same task. The effort applies to every role except the mechanical checker and the committer, and the last writer tier runs one level higher. Do not choose it for the user.
+
 The script prepares everything the workflow needs:
 
 - It applies the publication-type profile and any roster changes learned in earlier runs.

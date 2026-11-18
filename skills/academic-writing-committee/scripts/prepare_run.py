@@ -263,10 +263,31 @@ def apply_size(cfg, profile, size=None):
         profile["editors"] = [e for e in (profile.get("editors") or []) if e.get("key") in spec["editors"]]
     if "limits" in spec:
         profile["limits"] = {**profile.get("limits", {}), **spec["limits"]}
+    if "writerTiers" in spec:
+        models = spec["writerTiers"]
+        tiers = [{"model": m, "effort": "high"} for m in models]
+        if len(tiers) > 1:
+            tiers[-1]["effort"] = "xhigh"  # the last tier escalates by effort
+        profile["roster"] = {**profile.get("roster", {}), "writerTiers": tiers}
     for key in ("readBeforeBrief", "modelCeiling", "adaptRoster"):
         if key in spec and key not in cfg:
             cfg[key] = spec[key]
     return name, profile
+
+
+EFFORTS = ["low", "medium", "high", "xhigh", "max"]
+
+
+def run_effort(cfg, effort=None):
+    """The run's effort level (low, medium, high, xhigh, max), or None for each role's own default.
+    The workflow gives it to every role except the mechanical checker and the committer; the last
+    writer tier runs one level higher. --effort overrides the configuration's `effort`."""
+    e = effort or cfg.get("effort")
+    if e in (None, "", "default"):
+        return None
+    if e not in EFFORTS:
+        sys.exit(f"effort: unknown level '{e}'; use one of {', '.join(EFFORTS)} or default")
+    return e
 
 
 def load_catalog():
@@ -642,6 +663,7 @@ def prepare(args):
         "goal": cfg.get("goal") or profile.get("goal", ""),
         "publicationType": cfg.get("publicationType", ""),
         "committeeSize": size,
+        "effort": run_effort(cfg, args.effort),
         "publicationSection": profile.get("section", ""),
         "profileNote": profile.get("note", ""),
         "language": cfg.get("language", ""),
@@ -729,6 +751,10 @@ def prepare(args):
           f"({', '.join(r['key'] for r in run_args.get('readers', []))}), {len(run_args.get('reviewers', []))} lens(es) "
           f"({', '.join(r['key'] for r in run_args.get('reviewers', []))}), editors: "
           f"{', '.join(e['key'] for e in run_args.get('editors', [])) or 'none'}; at most {run_args['limits'].get('maxRounds', 5)} round(s) per unit")
+    ladder = run_args["roster"].get("writerTiers") or DEFAULT_TIERS
+    print(f"writer ladder ({len(ladder)} tier(s), one writer per unit and round): "
+          + " -> ".join(t["model"] for t in ladder)
+          + f"; effort: {run_args['effort'] or 'each role its own default (ask the user, then pass --effort)'}")
     print(f"publication type: {run_args['publicationType']}; bibliography: {', '.join(run_args['bibliography']) or 'none found'}; extra writing references: {', '.join(run_args['writingSkills']) or 'none'}")
     for st in stages:
         sids = [u["id"] for u in st["units"]]
@@ -926,6 +952,9 @@ def main():
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--size", choices=["low", "medium", "high", "full"],
                     help="committee size for this run (overrides committeeSize in the configuration; default full)")
+    ap.add_argument("--effort", choices=EFFORTS + ["default"],
+                    help="effort level of every role except the mechanical checker and the committer (overrides "
+                         "effort in the configuration; default: each role's own effort)")
     args = ap.parse_args()
     if args.record:
         record(args)

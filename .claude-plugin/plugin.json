@@ -1,7 +1,7 @@
 {
   "name": "academic-writing-committee",
   "displayName": "Academic Writing Committee",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Write, review and revise academic documents (books, book chapters, journal and conference papers, surveys, theses, technical reports, grant proposals, lecture notes) to a high standard: a complete writing guide, publication-type profiles, manuscript and citation checkers, and an optional self-improving multi-agent committee of writers, readers, reviewers and editors. With --no-committee it runs as plain single-session academic writing.",
   "author": {
     "name": "gacikgoz",
