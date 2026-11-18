@@ -31,7 +31,7 @@ It works in two ways:
   - [7. Long Documents, Cost and Troubleshooting](#7-long-documents-cost-and-troubleshooting)
 - [What It Enforces](#what-it-enforces)
 - [How the Committee Works](#how-the-committee-works)
-- [Publication Types](#publication-types)
+- [Publication Types and Committee Size](#publication-types-and-committee-size)
 - [The Checkers](#the-checkers)
 - [Models and Cost](#models-and-cost)
 - [Status](#status)
@@ -78,7 +78,7 @@ Writing, reviewing and checking without a committee need nothing more. To run th
 | **Review** | one careful review by severity, no edits | parallel reader personas and reviewer lenses, consolidated by a chair |
 | **Revision of a whole document** | unit by unit in reading order, with both checkers and the build after each unit | tiered writers, independent judgment each round, escalation, editors, a regression check |
 | **Setup** | none | a configuration file, and ideally a guidelines file (see [Setup](#setup)) |
-| **Cost** | one session | about 18 to 35 agent calls per unit (see [Models and Cost](#models-and-cost)) |
+| **Cost** | one session | about 18 to 28 agent calls per unit (see [Committee Size](#committee-size)) |
 
 The writing guide, the standards and the checkers are the same in both. The committee adds independent judgment, escalation and memory across runs.
 
@@ -183,7 +183,7 @@ The fields you will use most:
 
 | Field | What it sets |
 |---|---|
-| `publicationType` | **Required.** One of the [nine profiles](#publication-types); it chooses the readers, reviewer lenses, editors and limits. |
+| `publicationType` | **Required.** One of the [nine profiles](#choosing-the-type); it chooses the readers, reviewer lenses, editors and limits. |
 | `goal` | What the whole effort must achieve. Every agent reads it, so state your priorities here (for example "keep the author's text; change a paragraph only where a rule requires it"). |
 | `guidelines`, `context` | Your rule files, and other files every agent should know (notation table, roadmap, earlier reviews). |
 | `documents` or `stages` | What is revised, as whole documents or as units per stage. |
@@ -282,7 +282,7 @@ done
 }
 ```
 
-That roster runs at about 18 agent calls per unit, against about 25 to 35 with the defaults.
+That roster runs at about 18 agent calls per unit, against 24 to 28 with the defaults ([Committee Size](#committee-size)).
 
 **Troubleshooting:**
 
@@ -345,23 +345,68 @@ The role contracts are in [`committee/roles.md`](skills/academic-writing-committ
 
 ---
 
-## Publication Types
+## Publication Types and Committee Size
 
-Each type has a profile that sets how the document is divided and who judges it.
+Set the type with `publicationType` in the configuration. The type decides who judges the document, how it is divided into units, and how large the committee is. Choose the nearest type and adjust it with `addReviewers`, `dropReviewers` and the like.
 
-| Type (`publicationType`) | Unit of work | Readers | Reviewer lenses |
+### Choosing the Type
+
+| Type (`publicationType`) | Also use it for | Judged by | Central question |
 |---|---|---|---|
-| Journal article (`journal-article`) | whole document | expert, adjacent-field reader | technical, claims, experiments, significance, references, presentation, language, venue |
-| Conference paper (`conference-paper`) | whole document | program-committee reviewer, expert, skimmer | technical, claims, experiments, significance, references, presentation, language, venue |
-| Survey (`survey`) | whole document | newcomer, expert, practitioner | coverage, claims, references, technical, presentation, language, venue |
-| Thesis (`thesis`) | chapter | examiner, expert, generalist | guidelines, technical, claims, experiments, references, presentation, language |
-| Book (`book`) | chapter | newcomer, expert, chapter skimmer | guidelines, technical, claims, pedagogy, presentation, references, language |
-| Book chapter (`book-chapter`) | whole document | newcomer, expert | guidelines, technical, claims, references, presentation, language |
-| Lecture notes (`lecture-notes`) | chapter | newcomer, chapter skimmer | technical, pedagogy, presentation, language, references |
-| Technical report (`technical-report`) | whole document | practitioner, expert | technical, claims, references, presentation, language |
-| Grant proposal (`grant-proposal`) | whole document | panel generalist, specialist | venue, significance, feasibility, claims, references, language |
+| Journal article (`journal-article`) | research articles, letters | editor and reviewers | Is it sound, new and complete? |
+| Conference paper (`conference-paper`) | full, short and workshop papers | program committee | Is the contribution clear and convincing within the page limit? |
+| Survey (`survey`) | systematic reviews, tutorials | editor and reviewers | Is the coverage complete, organized and accurate? |
+| Thesis (`thesis`) | dissertations | examiners | Is it original, substantiated and coherent? |
+| Book (`book`) | textbooks, monographs | publisher, reviewers, adopters | Does it teach or argue cumulatively? |
+| Book chapter (`book-chapter`) | chapters in edited volumes | volume editors | Is it self-contained and authoritative? |
+| Lecture notes (`lecture-notes`) | course notes | students and instructor | Can a student learn from them alone? |
+| Technical report (`technical-report`) | white papers | practitioners | Is it accurate and actionable? |
+| Grant proposal (`grant-proposal`) | resubmissions | review panel | Is it significant, new and feasible? |
 
-Every type also gets a developmental editor, a committee chair, line and consistency editors, a regression checker, an integration editor and an editor-in-chief. A document with several units also gets a cross-unit claims review in every global round. A project can add or drop any reader or lens by its key in [`committee/catalog.json`](skills/academic-writing-committee/committee/catalog.json).
+[`references/publication-types.md`](skills/academic-writing-committee/references/publication-types.md) gives each type's readers, structure, length, typical failures and committee setup.
+
+### Who Sits on the Committee
+
+| Type | Unit of work | Writer starts at | Readers | Reviewer lenses |
+|---|---|---|---|---|
+| Journal article | whole document | hard (Opus) | expert, adjacent-field reader | technical, claims, experiments, significance, references, presentation, language, venue |
+| Conference paper | whole document | hard (Opus) | program-committee reviewer, expert, skimmer | technical, claims, experiments, significance, references, presentation, language, venue |
+| Survey | whole document | hard (Opus) | newcomer, expert, practitioner | coverage, claims, references, technical, presentation, language, venue |
+| Thesis | chapter | hard (Opus) | examiner, expert, generalist | guidelines, technical, claims, experiments, references, presentation, language |
+| Book | chapter | standard (Sonnet) | newcomer, expert, chapter skimmer | guidelines, technical, claims, pedagogy, presentation, references, language |
+| Book chapter | whole document | hard (Opus) | newcomer, expert | guidelines, technical, claims, references, presentation, language |
+| Lecture notes | chapter | standard (Sonnet) | newcomer, chapter skimmer | technical, pedagogy, presentation, language, references |
+| Technical report | whole document | standard (Sonnet) | practitioner, expert | technical, claims, references, presentation, language |
+| Grant proposal | whole document | hard (Opus) | panel generalist, specialist | venue, significance, feasibility, claims, references, language |
+
+Every committee also has these roles, whatever the type:
+
+- **For each unit:** a developmental editor, who writes the brief; the writer; a mechanical checker; the committee chair; the line and consistency editors; and a regression checker.
+- **For the whole document:** an integration editor, an editor-in-chief, a retrospective analyst and a committer. A document with several units also gets a cross-unit claims review in every global round, and a stage without fixed units gets a scout to divide it.
+
+A unit can be marked `standard`, `hard` or `critical` in the configuration. Critical units start their writer, brief, chair and technical lens on Fable.
+
+### Committee Size
+
+| Type | Readers | Lenses | Editors | Members per unit | Rounds per unit (max) | Units at once (wave) | Agent calls per unit | Review only |
+|---|---|---|---|---|---|---|---|---|
+| Journal article | 2 | 8 | 2 | 17 | 6 | 4 | ~26 | ~13 |
+| Conference paper | 3 | 8 | 2 | 18 | 6 | 4 | ~28 | ~14 |
+| Survey | 3 | 7 | 2 | 17 | 6 | 4 | ~28 | ~13 |
+| Thesis | 3 | 7 | 2 | 17 | 5 | 6 | ~28 | ~13 |
+| Book | 3 | 7 | 2 | 17 | 5 | 6 | ~28 | ~13 |
+| Book chapter | 2 | 6 | 2 | 15 | 6 | 4 | ~24 | ~11 |
+| Lecture notes | 2 | 5 | 2 | 14 | 5 | 6 | ~24 | ~10 |
+| Technical report | 2 | 5 | 2 | 14 | 6 | 4 | ~24 | ~10 |
+| Grant proposal | 2 | 6 | 2 | 15 | 6 | 4 | ~24 | ~11 |
+| *Lean book roster ([§7](#7-long-documents-cost-and-troubleshooting))* | *1* | *3* | *1* | *10* | *3* | *6* | *~18* | *~7* |
+
+- **Members per unit** counts the readers, the lenses, the two editors, and the five fixed roles of each unit (developmental editor, writer, mechanical checker, chair, regression checker).
+- **Agent calls per unit** is the estimate `prepare_run.py` prints for each type with its default roster. It assumes 2.5 rounds on average, with only the readers and lenses whose concerns remain looking again after the first round. A unit that needs every round costs more, and the global rounds add a few calls for the whole document. A run stops planning new units at about 900 calls (`limits.maxAgents`) and leaves the rest to the next run.
+- **Review only** is one round with no edits (`--review-only`): the readers, the lenses, the chair and the report.
+- **Whole-document types** get more lenses because there is only one unit. **Chapter types** keep a focused set per chapter, and the integration editor and editor-in-chief look after the whole.
+
+The full catalog of personas and lenses is [`committee/catalog.json`](skills/academic-writing-committee/committee/catalog.json), and the profiles are in [`profiles/`](skills/academic-writing-committee/profiles/).
 
 ---
 
@@ -401,7 +446,7 @@ The committee gives each task enough capability and no more. The defaults:
 | Briefs, hard writers, the chair, the technical and claims lenses, the integration editor | Opus |
 | Critical units, escalated writers, the editor-in-chief | Fable |
 
-A unit costs about 25 to 35 agent calls with the default roster, and a run is capped at about 900. The [lean roster](#7-long-documents-cost-and-troubleshooting) brings it to about 18. `prepare_run.py` prints its estimate before anything starts. Defaults, escalation paths and the reasoning behind them are in [`committee/models.md`](skills/academic-writing-committee/committee/models.md).
+A unit costs about 24 to 28 agent calls with the default roster, depending on the type ([Committee Size](#committee-size)), and a run is capped at about 900. The [lean roster](#7-long-documents-cost-and-troubleshooting) brings it to about 18. `prepare_run.py` prints its estimate before anything starts. Defaults, escalation paths and the reasoning behind them are in [`committee/models.md`](skills/academic-writing-committee/committee/models.md).
 
 ---
 
