@@ -3,7 +3,7 @@
 **Academic writing for Claude that holds every sentence to the standard of a careful editor, and can put a whole committee of readers, reviewers and editors behind it when it matters.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Version 2.2.0](https://img.shields.io/badge/version-2.2.0-informational)
+![Version 2.3.0](https://img.shields.io/badge/version-2.3.0-informational)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin%20%2B%20skill-8A63D2)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -44,30 +44,38 @@ It works in two ways:
 
 ## Quick Start
 
-Install the plugin in Claude Code. This repository is both the plugin and its marketplace:
+**1. Install** the plugin in Claude Code. This repository is both the plugin and its marketplace:
 
 ```
 /plugin marketplace add gacikgoz/academic-writing-committee
 /plugin install academic-writing-committee@academic-writing-committee
 ```
 
-Then ask for what you need. The skill loads by itself whenever a task involves academic writing:
+**2. Start** from the root of your project:
 
-```text
-Revise the introduction of paper.tex for a NeurIPS submission, no committee.
-Check every reference in thesis/chapter3.tex against refs.bib.
-Review proposal.md as an NSF panel would, without a committee.
-Run the committee on paper.tex as a conference paper until everything is approved.
-Run a medium committee at high effort on the thesis chapters in writing-committee.json.
+```
+/academic-writing-committee:start
 ```
 
-Or start a mode directly with one of the [commands](#commands), for example:
+or just say what you want ("help me get my paper ready for NeurIPS"). That is all you need to know. The skill looks at your project first and asks only what the project cannot tell it.
 
-```text
-/academic-writing-committee:no-committee revise chapters/02-methods.tex thesis
-```
+**What happens next:**
 
-Writing, reviewing and checking without a committee need nothing more. To run the committee on a whole document, follow [Setup](#setup).
+1. **It looks.** It finds the main document, its class and venue, whether it is a paper, a thesis or a book, the chapters, the bibliography, any guideline or venue-rules file, the build command, and a committee run already under way.
+2. **It tells you what it found**, in a line or two: *"A NeurIPS paper, main.tex, refs.bib, built with latexmk; no guidelines file."*
+3. **It asks the rest in one go**, as multiple-choice questions with a recommended answer:
+
+   | Question | Asked when |
+   |---|---|
+   | What should I do: revise with a committee, revise here without one, review only, or check references and language? | the request does not say |
+   | What kind of document is this? | the type is uncertain |
+   | What should the revision achieve? | always, for a whole document |
+   | Are there rules the text must follow? | no guidelines file was found |
+   | How large should the committee be, and at what effort? | for a committee |
+
+4. **It does the work.** It edits, reviews or checks in your session, or writes the committee's configuration, checks that the build works, tells you the plan in three lines and launches the committee.
+
+A sentence, a paragraph or a section needs none of this: ask, and it is done at once. Run `/academic-writing-committee:start` again later and it continues the run already under way instead of starting over.
 
 ---
 
@@ -75,12 +83,12 @@ Writing, reviewing and checking without a committee need nothing more. To run th
 
 | | No committee | Committee |
 |---|---|---|
-| **How to choose it** | `--no-committee`, "no committee" in the request, or the `no-committee` command; automatic when the Workflow tool is not available | the `committee` or `review` command, or a request for a committee run |
+| **How to choose it** | answer "revise here" when `start` asks; or `--no-committee`, "no committee" in the request, or the `no-committee` command; automatic when the Workflow tool is not available | answer "revise with a committee" when `start` asks; or the `committee` or `review` command |
 | **Who does the work** | Claude, in your session | a Workflow of specialized agents |
 | **Best for** | a section, a paper you are actively editing, a quick review, a citation audit | a whole paper, thesis or book brought up to a set of guidelines |
 | **Review** | one careful review by severity, no edits | parallel reader personas and reviewer lenses, consolidated by a chair |
 | **Revision of a whole document** | unit by unit in reading order, with both checkers and the build after each unit | tiered writers, independent judgment each round, escalation, editors, a regression check |
-| **Setup** | none | a configuration file, and ideally a guidelines file (see [Setup](#setup)) |
+| **Setup** | none | written for you by `start` from the project and your answers ([Setup](#setup)) |
 | **Cost** | one session | about 14 to 28 agent calls per unit, by [mode](#committee-modes-low-medium-high-full) and type |
 
 The writing guide, the standards and the checkers are the same in both. The committee adds independent judgment, escalation and memory across runs.
@@ -89,10 +97,11 @@ The writing guide, the standards and the checkers are the same in both. The comm
 
 ## Commands
 
-The plugin adds five commands. The standalone skill does everything they do when you ask in plain words.
+You rarely need more than `start`. The other commands go straight to one mode. The standalone skill does everything they do when you ask in plain words.
 
 | Command | What it does |
 |---|---|
+| `/academic-writing-committee:start [what you want] [file or folder]` | **Start here.** Looks at the project, asks only what it cannot find out, and runs the right mode. Continues a committee run already under way. |
 | `/academic-writing-committee:write [file or topic] [type] [instructions]` | Writes or revises text to the standard of the guide, then runs both checkers on what changed. Always a single session. |
 | `/academic-writing-committee:review [--no-committee \| --size low\|medium\|high\|full] [--effort low\|medium\|high\|xhigh\|max] [main file] [type] [venue]` | Reviews a document without changing it. Readers and reviewer lenses work in parallel and a chair writes a prioritized report. With `--no-committee`, Claude reviews it alone. |
 | `/academic-writing-committee:committee [--no-committee \| --size low\|medium\|high\|full] [--effort low\|medium\|high\|xhigh\|max] [configuration] [stages or units]` | Runs the committee until every unit and the whole document are approved, or until a unit needs your decision. `--size` picks the [committee mode](#committee-modes-low-medium-high-full) and `--effort` the [effort](#effort); Claude asks for the effort if you give none. With `--no-committee`, Claude revises the document unit by unit in one session. |
@@ -143,7 +152,7 @@ The standalone skill has every mode; only the slash commands come with the plugi
 
 ### 3. Check the Installation
 
-With the plugin, `/plugin` should show `academic-writing-committee` as installed, and typing `/academic-writing-committee:` should offer the five commands. With the standalone skill, ask Claude "Which skills can you use?" and look for `academic-writing-committee`.
+With the plugin, `/plugin` should show `academic-writing-committee` as installed, and typing `/academic-writing-committee:` should offer the six commands. With the standalone skill, ask Claude "Which skills can you use?" and look for `academic-writing-committee`.
 
 The scripts run without Claude, so they are a quick test of Python and of the network:
 
@@ -158,7 +167,27 @@ If `--online` reports network errors, the checker still runs offline without the
 
 ### 4. Set Up a Project for the Committee
 
-The committee needs a git repository, a configuration file and, ideally, a guidelines file. The `committee` command writes the configuration with you if it is missing and asks only for what it cannot infer. You can also write the files yourself.
+**You do not have to do this by hand.** `/academic-writing-committee:start` detects what it can, asks you the rest and writes the configuration. This section is for when you want to see, check or adjust what it does.
+
+The committee needs a git repository, a configuration file and, ideally, a guidelines file. The detection and the configuration come from one script, which you can also run yourself:
+
+```bash
+S=skills/academic-writing-committee/scripts
+python3 $S/project_setup.py detect            # what the project says, and what is still open
+python3 $S/project_setup.py init --type conference-paper --size high --effort high \
+  --goal "Ready for submission to NeurIPS"    # writes writing-committee.json
+```
+
+`detect` changes nothing. It finds:
+- the main document, its class, title and venue;
+- the publication type, with its confidence;
+- the chapters, the bibliography or reference list, and the guideline and context files (earlier reviews, a notation table, a roadmap);
+- the build command and the installed tools;
+- the git state, and an existing configuration with its ledger.
+
+`init` writes the configuration from what was detected and your answers. It never overwrites an existing one without `--force`.
+
+To write or adjust the files yourself:
 
 **a. Write the guidelines.** The guidelines are the committee's authority: the venue's author instructions, a house style, or your own rules (page limit, citation style, required sections, terms to use). Put them in a Markdown file such as `guidelines.md` or `venue-rules.md`. Number the rules if you can, so that reviews can cite them. Without a guidelines file, the skill's writing guide serves as the guidelines.
 
@@ -208,7 +237,7 @@ Every field is documented in [`committee/config.md`](skills/academic-writing-com
 
 ### 5. Run the Committee Step by Step
 
-The `committee` command does all of this for you. These are the steps it takes, for when you want to drive or inspect a run yourself (`S` is the skill's `scripts/` folder):
+The `start` and `committee` commands do all of this for you. These are the steps it takes, for when you want to drive or inspect a run yourself (`S` is the skill's `scripts/` folder):
 
 1. **Preview the plan.** This writes the workflow arguments to `.writing-committee/run-args.json` and prints the units, their order and the estimated number of agent calls:
    ```bash
@@ -500,7 +529,7 @@ A unit costs about 24 to 28 agent calls in the default `full` mode, depending on
 
 ## Status
 
-Version 2.2.0. The writing guide, the checkers, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
+Version 2.3.0. The writing guide, the checkers, the guided start, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
 
 ---
 
@@ -510,7 +539,7 @@ Version 2.2.0. The writing guide, the checkers, the no-committee option, the fou
 .claude-plugin/
   plugin.json                  plugin manifest
   marketplace.json             this repository as a one-plugin marketplace
-commands/                      write, review, committee, check, no-committee
+commands/                      start, write, review, committee, check, no-committee
 package-skill.sh               builds dist/academic-writing-committee.zip
 skills/academic-writing-committee/
   SKILL.md                     the guide: principles, standards, process, modes, no-committee option
@@ -518,7 +547,7 @@ skills/academic-writing-committee/
   profiles/                    one JSON profile per publication type
   committee/                   procedure, roles, quality gates, models, configuration, catalog
   workflow/committee.js        the committee workflow
-  scripts/                     prepare_run.py, check_manuscript.py, check_citations.py
+  scripts/                     project_setup.py, prepare_run.py, check_manuscript.py, check_citations.py
   templates/                   example project configurations
   SOURCES.md, LICENSES/        the works this skill draws on, and their licenses
 ```

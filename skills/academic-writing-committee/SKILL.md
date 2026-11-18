@@ -9,13 +9,38 @@ This skill produces academic text that is accurate, clear, fluent, and honest ab
 
 **Order of authority.** The venue's current instructions and the project's own guidelines come first, then the field's conventions, then this skill. Numbers given here (lengths, counts, proportions) are starting points, not rules.
 
+## Start Here: The Guided Flow
+
+The user should never need to know the modes, the flags or the configuration format. Drive the work with what the project already says and a few questions; never ask what the repository answers.
+
+1. **Small, local requests need no setup.** A sentence, a paragraph, a section the user points to, a question about style: do it in Write mode at once, with the checkers on what changed. Ask nothing unless the request is ambiguous.
+2. **For anything about a whole document** (revise, review, check, "help me with my paper"), first run, silently:
+   ```bash
+   python3 ${CLAUDE_SKILL_DIR}/scripts/project_setup.py detect --json
+   ```
+   It reads the project without changing it. It reports the main document, its class and venue, a publication-type guess with its confidence, chapters, the bibliography, guideline and context files, a build command, an existing committee configuration and its ledger, git state and installed tools. It also lists the questions that remain open. Take every detected value as known and say it back in one or two lines ("A NeurIPS paper, main.tex, 42 references in refs.bib, no guidelines file").
+3. **An existing configuration means a run is under way.** Continue it: print `prepare_run.py <config> --status` in two or three lines, ask only what the configuration lacks (size, effort), and resume. Do not set up again.
+4. **Ask the open questions with the question tool, in one batch.** That is at most four questions with at most four options each, the recommended option first and marked "(Recommended)". Order them by how much the answer changes:
+   - **The task**, if the request does not make it clear: revise with a committee, revise in this session without one, review only (a report, no edits), or check references and language.
+   - **The publication type**, only when the confidence is not high: offer the guess first.
+   - **The goal**: submission to the detected venue, meeting the detected guidelines, or clearer prose without changing the content.
+   - **The guidelines**, only when none were found.
+   - **For a committee: the size and the effort** (sizes `low`, `medium`, `high`, `full`; effort `high`, `medium`, `xhigh`, `low`, with `max` and `default` accepted as Other). If they do not fit in the first batch, ask them in a second, never in a third.
+5. **Write the configuration from the answers** without showing JSON, unless the user asks:
+   ```bash
+   python3 ${CLAUDE_SKILL_DIR}/scripts/project_setup.py init --type T --size S --effort E --goal "..." [--guidelines f.md]
+   ```
+6. **Go.** Run the preflight of `committee/procedure.md`, prepare the run, state the plan in three lines (units, committee, estimated agent calls), and launch. Answers given in this flow count as the user's request for a multi-agent run; do not ask for a separate confirmation. Without the Workflow tool, say so in one line and continue without a committee.
+
+Problems the detection reports (no git repository, uncommitted changes, a missing build tool) are raised once, with the fix, at the point they matter: before the first committee run, not before a single-session task.
+
 ## Modes
 
 | Mode | When | What to do |
 |---|---|---|
 | **Write** | Draft, revise, or polish text | Identify the publication type and stage, read the references the task needs (routing below), and edit the actual text. Then run `check_manuscript.py` on what changed, and `check_citations.py` when the text cites a bibliography, and fix what they find. |
 | **Review** | Judge a manuscript without changing it | For a quick review, follow `references/review-and-revision.md` and report findings by severity. For an independent committee review, prepare a run with `scripts/prepare_run.py <config> --review-only` and launch the committee workflow (below); the type's readers and reviewer lenses work in parallel, and the chair consolidates a prioritized report. Nothing in the document changes. |
-| **Committee** | Bring a whole document up to its guidelines | Follow `committee/procedure.md`: configure, preflight, prepare, launch, record, verify, and continue until every unit and the whole document are approved. |
+| **Committee** | Bring a whole document up to its guidelines | Start with the guided flow above, then follow `committee/procedure.md`: preflight, prepare, launch, record, verify, and continue until every unit and the whole document are approved. |
 | **Check** | Mechanical audit | Run `scripts/check_manuscript.py` and `scripts/check_citations.py` (below); confirm each finding in context before changing anything. |
 
 Responding to reviewers runs in Write mode, and writing a review report as a reviewer runs in Review mode; both use `references/review-and-revision.md`.
@@ -37,7 +62,7 @@ Review and committee runs use the Workflow tool, so they need the user's explici
 
 **Committee size.** A committee run has four sizes: `low` (one reader, two lenses, the line editor, at most 2 rounds per unit, a two-tier writer ladder Sonnet → Sonnet, every role on Sonnet or below), `medium` (one reader, three lenses, the line editor, at most 3 rounds, writers Sonnet → Opus → Opus, every role on Opus or below, the Editor-in-Chief included), `high` (two readers, five lenses, both editors, at most 4 rounds, writers Sonnet → Opus → Fable → Fable) and `full` (the whole profile of the publication type, the default). Each unit has one writer per round, starting on the tier its difficulty sets. The user chooses the size in words ("a medium committee"), with `--size` on the commands, or with `committeeSize` in the configuration; `prepare_run.py --size` applies it, and `committee/sizes.json` defines it.
 
-**Effort: always ask.** Before preparing a committee run or a committee review, ask the user which effort level the committee should work at, unless they already named one (in the request, with `--effort` on the commands, or as `effort` in the configuration). Ask once, as one question, with these options: `low`, `medium`, `high` (recommended for most work), `xhigh`, `max`, and `default` (each role keeps its own effort). Say briefly what changes: more effort means more careful work, more tokens and slower runs. If the size is not settled either, ask for both in the same message. Pass the answer with `prepare_run.py --effort`. Every role then runs at that effort except the mechanical checker and the committer; the last writer tier runs one level higher. Never choose an effort for the user, and do not ask again for later runs of the same task.
+**Effort: always ask.** Before preparing a committee run or a committee review, ask the user which effort level the committee should work at, unless they already named one (in the request, with `--effort` on the commands, or as `effort` in the configuration). Ask once, as one question in the guided flow's batch, with these options: `high` (recommended for most work), `medium`, `xhigh`, `low`, and accept `max` or `default` (each role keeps its own effort) as Other. Say briefly what changes: more effort means more careful work, more tokens and slower runs. If the size is not settled either, ask for both in the same message. Pass the answer with `prepare_run.py --effort`. Every role then runs at that effort except the mechanical checker and the committer; the last writer tier runs one level higher. Never choose an effort for the user, and do not ask again for later runs of the same task.
 
 ## Publication Types
 
@@ -242,6 +267,7 @@ For a long document, or whenever the user asks for writers, readers, reviewers, 
 | `committee/config.md` | The project configuration file, `writing-committee.json` |
 | `committee/catalog.json` | Every reader persona, reviewer lens, and editor |
 | `profiles/*.json`, `templates/*.json` | Committee defaults per publication type, and example configurations |
+| `scripts/project_setup.py` | `detect` reads what the project already says (document, type, venue, chapters, bibliography, guidelines, build, an existing run) and lists the open questions; `init` writes the configuration from the answers |
 | `scripts/prepare_run.py` | Expands units, applies the profile, writes the workflow arguments, records results (`--review-only` for a review, `--shards K` for several workflows at once, `--plan-only` for briefs ahead of the revision) |
 | `workflow/committee.js` | The committee workflow, launched with the Workflow tool |
 

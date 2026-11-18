@@ -43,14 +43,21 @@ Follow these steps in order. The orchestration runs as a Workflow (invoking this
 
 ### 1. Find or Write the Project Configuration
 
-Look for the configuration the user named, or `writing-committee.json` at the repository root. If none exists, write one:
+Follow the guided flow of `SKILL.md` ("Start Here"):
+
+1. Run `python3 <skill>/scripts/project_setup.py detect --json`. If it finds a configuration (the one the user named, `writing-committee.json`, or one in the state directory), use it and continue from its ledger.
+2. Otherwise ask the questions it lists (one batch with the question tool; the task, the type when uncertain, the goal, the guidelines when none were found, the size and the effort) and write the configuration with `project_setup.py init`. It fills in what was detected: the main document or the chapter glob, the shared files, the bibliography or reference list, guideline and context files, and the build commands.
+3. Check what `init` could not know, and fix it in the file without asking: a chapter that cannot be built alone needs a unit check that builds it with the main preamble, and a missing build tool needs installing or a check that does not use it.
+
+The fields, for reference:
 
 - `publicationType`: one of the profiles in `profiles/` (book, book-chapter, journal-article, conference-paper, survey, thesis, technical-report, grant-proposal, lecture-notes). The profile chooses the readers, reviewer lenses, editors, limits and how the document is divided into units.
-- `guidelines`: the project's rules (a style sheet, the venue's author instructions or the call's requirements). If there are none, write a short `guidelines.md` with the user from their goals and the venue's rules; the skill's writing guide covers everything general.
+- `guidelines`: the project's rules (a style sheet, the venue's author instructions or the call's requirements). If there are none and the user described rules, write a short `guidelines.md` from their answer; otherwise the skill's writing guide covers everything general.
 - For a paper, chapter, report or proposal: `documents` lists the main file(s); each becomes one unit judged as a whole. For a book, thesis or lecture notes: `stages` with `unitsFrom` globs make one unit per chapter.
 - `checks`: the commands that build the document and check it (see `committee/config.md`). The committee adds `scripts/check_manuscript.py` and `scripts/check_citations.py` to every unit check and every global check by itself; give the `bibliography` if the documents do not name it.
+- `committeeSize` and `effort`: from the user's answers.
 
-Ask the user only for what you cannot infer (the venue, the scope, the deadline for the page limit), and say which defaults you chose.
+Say which detected values and defaults you used, in one or two lines.
 
 ### 2. Preflight
 
