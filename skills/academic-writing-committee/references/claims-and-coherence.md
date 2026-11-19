@@ -77,9 +77,9 @@ Match the verb and the qualifier to the strongest evidence you actually have. Mo
 
 | Rung | Evidence | Verbs | Typical qualifiers |
 |---|---|---|---|
-| 1 | Proof or derivation, in the document or cited | prove, show, establish, guarantee | "under assumptions A1–A3," "for all *n* ≥ 2" |
+| 1 | Proof or derivation, in the document or cited | prove, show, establish, guarantee | "under assumptions A1 to A3," "for all *n* ≥ 2" |
 | 2 | Randomized or otherwise identified causal design, replicated or across many settings | cause, increase, reduce, determine | the population, setting, and dose or range tested |
-| 3 | Controlled experiment or benchmark comparison with uncertainty | improve, outperform, reduce, exceed, show | "on datasets A–D," "by 2.1 ± 0.4 points (mean ± SD, 5 seeds)" |
+| 3 | Controlled experiment or benchmark comparison with uncertainty | improve, outperform, reduce, exceed, show | "on datasets A to D," "by 2.1 ± 0.4 points (mean ± SD, 5 seeds)" |
 | 4 | Observational association, adjusted or not | is associated with, predicts, co-occurs with, is linked to | "after adjusting for X," "in this cohort" |
 | 5 | Exploratory, post hoc, small sample, single site | suggest, indicate, are consistent with | "in this sample," "exploratory," "a first estimate" |
 | 6 | Qualitative evidence, case studies, argument | illustrate, indicate, we argue | "in these cases," "on this reading" |
@@ -94,7 +94,7 @@ Moving a sentence to the right rung:
 
 | Evidence in hand | Overclaimed | Undersold | Calibrated |
 |---|---|---|---|
-| Theorem 2 with stated assumptions | "always converges" | "seems to converge" | "converges under assumptions A1–A3 (Theorem 2)" |
+| Theorem 2 with stated assumptions | "always converges" | "seems to converge" | "converges under assumptions A1 to A3 (Theorem 2)" |
 | Benchmark gains, five seeds, three datasets | "is superior to existing methods" | "might offer some gains" | "improves F1 by 2.1 to 3.4 points on the three datasets (five seeds)" |
 | Cross-sectional survey | "remote work reduces burnout" | "there could perhaps be a link" | "remote work was associated with lower burnout scores" |
 | Eight interviews | "practitioners reject automated review" | "a few people said some things" | "six of eight practitioners described automated review as a second opinion, not a replacement" |
@@ -116,7 +116,7 @@ Template: *verb + object + distinguishing property + evidence (+ location)*.
 | "We propose a novel approach for efficient inference." | "We introduce block-sparse caching, which cuts decoding memory by 38% at equal accuracy on three benchmarks (Section 4, Table 2)." |
 | "We provide extensive experiments." | "We evaluate on 12 datasets in four domains against five tuned baselines, with five seeds each (Section 5)." |
 | "We offer insights into model behavior." | "We show that error concentrates on inputs longer than the training maximum (Figure 4), and that length-aware sampling removes most of the gap." |
-| "We release code." | "We release the code, trained models, and evaluation scripts at [repository], sufficient to reproduce Tables 2–4." |
+| "We release code." | "We release the code, trained models, and evaluation scripts at [repository], sufficient to reproduce Tables 2 to 4." |
 
 Contributions by document type:
 

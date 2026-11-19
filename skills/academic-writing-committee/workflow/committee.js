@@ -92,7 +92,7 @@ const REVIEWERS = A.reviewers || [
   { key: 'claims', focus: 'calibration and coherence of claims: no overclaiming and no underselling; contributions, numbers, terms and scope identical wherever they recur; conclusions that follow from the evidence', model: 'opus', effort: 'high' },
   { key: 'references', focus: 'every reference is real and correctly described (verify authors, title, venue, year and identifier by search and with the citation checker), and each cited work supports the sentence citing it', model: 'sonnet', effort: 'high' },
   { key: 'presentation', focus: 'figures, tables, equations, lists, headings and layout as rendered; legibility, labels, captions, references to them in the text', model: 'sonnet', effort: 'medium' },
-  { key: 'language', focus: 'fluency and coherence: paragraph flow and transitions, repetition, formulaic phrasing, hyphens, en dashes and em dashes, chains of and, parallel lists, consistent terms and spelling', model: 'sonnet', effort: 'medium' },
+  { key: 'language', focus: 'fluency and coherence: paragraph flow and transitions, repetition, formulaic phrasing, the house rules on dashes, hyphens, conjunction commas, paragraph openings and abbreviations, chains of and, parallel lists, consistent terms and spelling', model: 'sonnet', effort: 'medium' },
 ]
 const EDITORS = A.editors || [
   { key: 'line', focus: 'prose: clarity, concision, flow between sentences and paragraphs, terminology, capitalization, punctuation, parallel lists; remove filler and repetition without removing substance', model: 'sonnet', effort: 'high' },

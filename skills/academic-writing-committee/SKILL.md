@@ -128,9 +128,9 @@ Name the type, its primary judge, and the judge's decision before planning or re
 Reviewers often raise these points. Each standard has a reference with the full rules, and a checker finds candidates.
 
 **1. Language mechanics** (`references/language-mechanics.md`)
-- Hyphen for compound modifiers before a noun ("a two-layer network"; "the network has two layers"), never after an *-ly* adverb ("a widely used method").
-- En dash for ranges (pages 12–15, 2019–2023) and for pairs of equals (Kullback–Leibler, encoder–decoder); "from 5 to 10," never "from 5–10."
-- Em dash rarely, at most about one pair per paragraph, closed up in American style, and only where a comma, a colon, or parentheses would not do. Never a hyphen, a spaced hyphen, or a double hyphen in its place. A true minus sign for negative numbers.
+- House rules (defaults; a project's guidelines may relax them): no en or em dash in prose, captions or tables (a comma, a colon, parentheses, a new sentence, or "to" for a range: "groups 1 to 6"); no unneeded hyphen; no comma right after a conjunction or a sentence-initial connective ("However the ...", not "However, the ..."); no paragraph that begins with *To*; every abbreviation written out at first use in the body, none in the abstract, and proper names introduced with a descriptive noun ("the BERT encoder").
+- Hyphen for compound modifiers before a noun only where needed ("a two-layer network"; "the network has two layers"), never after an *-ly* adverb ("a widely used method") or in a compound after its noun ("is well known"); defined terms keep their hyphen.
+- Ranges in words ("from 5 to 10," "pages 12 to 15"); a pair of names keeps a hyphen (Kullback-Leibler). Never a spaced hyphen or a double hyphen as a dash. A true minus sign for negative numbers.
 - No chains of *and*: at most two coordinated clauses; no "and also" or "and/or"; one serial-comma convention.
 - No repetition: no content word three or more times in a short span, no runs of the same sentence opening, no stacked additive transitions ("Moreover ... Furthermore ... Additionally"). Technical terms stay fixed; vary only ordinary words.
 
@@ -144,6 +144,7 @@ Reviewers often raise these points. Each standard has a reference with the full 
 - No underselling: no stacked hedges, no contribution buried or left vague, no "merely" for a supported result.
 - Questions, contributions, experiments, results, discussion, and conclusion line up one to one. Every contribution in the abstract and introduction has specific evidence in the body. The discussion and conclusion restate it without inflating it, and every claim in the conclusion traces to a result.
 - Numbers, names, terms, and notation are identical wherever they recur.
+- The title is short and striking (*Name: what it does for whom*), leads with the method and the contribution and names the domain, uses no abbreviations, claims nothing the evidence does not carry, and has no vague scope prefix (`references/structure.md`, Titles). Only the author approves a title.
 
 **4. Real references** (`references/evidence-and-citations.md`)
 - Cite only works you have found and opened. Check authors, title, venue, year, and identifier (DOI, arXiv identifier, ISBN, or publisher page) against the work itself.
@@ -170,7 +171,7 @@ Reviewers often raise these points. Each standard has a reference with the full 
 
 ### 3. Draft
 
-- Draft the concrete parts first: methods, then results and displays, then the introduction, discussion, and conclusion. Write the abstract and title last. For argumentative work, draft the introduction first to fix the thesis, and expect to rewrite it.
+- Draft the concrete parts first: methods, then results and displays, then the introduction, discussion, and conclusion. Write the abstract and title last. For the title, propose three to five candidates, each with one line on what it stresses, and write none into any file until the author explicitly approves one; then change it everywhere it appears and rebuild (`references/structure.md`, Titles). For argumentative work, draft the introduction first to fix the thesis, and expect to rewrite it.
 - Before each section, reread its outline entry and the end of the previous section.
 - Separate drafting from editing. A complete rough draft is worth more than a polished fragment.
 - Keep placeholders for missing facts and citations, and add sources to the ledger as you use them.

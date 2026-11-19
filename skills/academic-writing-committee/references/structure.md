@@ -44,7 +44,33 @@ IMRaD is a default, not a law: study design, the reporting guideline, the articl
 - Name the subject and the contribution or finding in the fewest words that stay specific. Put the key terms a searcher would type near the front.
 - Claim no more than the paper supports: no causal verb for an association, no population wider than the sample, no "novel" or "first" without evidence (`claims-and-coherence.md`).
 - Name the design when the field expects it ("a randomized trial," "a systematic review").
-- Avoid undefined acronyms, questions the paper does not answer, and puns that hide the topic. A title-and-subtitle form works when the first part states the topic and the second the approach or result.
+- Avoid questions the paper does not answer and puns that hide the topic. A title-and-subtitle form works when the first part states the topic and the second the approach or result.
+
+### Title Style (House Rules)
+
+These rules are the skill's defaults for the title of an article, report or thesis; a venue's instructions or the project's guidelines may override them.
+
+- **T1. Short and striking.** A title is a name, not a descriptive homework sentence. When the work has a system name, prefer the form *Name: what it does for whom*.
+- **T2. Lead with the method and the contribution, and name the domain.** In applied artificial intelligence, the method and the artificial intelligence contribution come first and the application domain is named. Do not shrink the contribution to one component ("tool use" when the system orchestrates several integrated systems), and do not name only one stage ("Deriving ...," "Training ...") when the contribution is a whole pipeline.
+- **T3. No abbreviations or acronyms.** Write "Unmanned Aerial Vehicle," not "UAV." A system name is allowed when the subtitle makes clear what it is.
+- **T4. No claim the evidence does not carry.** An aim may be named as the target setting ("for integrated operations"), never as a result. Avoid words whose connotations the guidelines exclude, for example military "joint operations," or "swarm" and "fleet" when the work is about neither.
+- **T5. No vague scope prefix.** Do not open with a phrase that hides the contribution ("Towards integrated X operations: ..."); the words before the colon carry the most weight.
+
+| Before | Why it fails | After (shape) |
+|---|---|---|
+| An Approach for Using Language Models to Train Retrieval for Clinical Notes | a homework sentence (T1); one stage, "Train," for a whole pipeline (T2) | *Name*: Retrieval-Augmented Language Models for Searching Clinical Notes |
+| Towards Integrated Grid Operations: An LLM Tool-Use Approach | a scope prefix (T5); an acronym (T3); one component, "tool use," for an orchestrating system (T2) | *Name*: Language Model Orchestration of Power Grid Control Systems |
+| Autonomous Swarm Coordination for Joint Operations (a study of one inspection robot) | connotations and claims the work does not carry (T4) | a title that names what was built and for whom |
+
+### Choosing and Changing the Title
+
+The title belongs to the author. The procedure is the same for every role and every run:
+
+1. Propose three to five candidate titles, each with one line on what it stresses (method, contribution, domain, audience) and which rule it trades off, if any. The candidates go to the author, in the reply or in an agent's report, marked as candidates.
+2. Never write a title into any file of the project (main file, title page, cover letter, configuration, decision log) until the author has explicitly approved one. A committee agent that finds a weak title reports it and proposes candidates; it does not change it.
+3. Once the author approves a title, change it in one pass everywhere it appears (the main file, the title page, the cover letter, the project configuration, the decision log and any metadata), record the approval and its date in the decision log, and rebuild the document.
+
+`scripts/check_manuscript.py` reports an abbreviation in the title (TITLE_ABBREVIATION) and a long title (TITLE_TOO_LONG); the other rules are checked by reading.
 
 ## Abstracts
 

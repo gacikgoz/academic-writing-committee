@@ -14,6 +14,7 @@ Every agent in the committee reads the shared rules below and then the section f
 7. **Findings.** Every finding has an id, a severity (see `quality-gates.md`), an exact location (`file:line`, or section and rendered page), the guideline rule it concerns (section and bullet), the problem in one or two sentences, and a concrete fix. A finding nobody can locate or act on is not a finding.
 8. **Scope.** Do your role's job and nothing else. Do not expand the unit's scope, refactor unrelated material or chase issues another role owns; mention them briefly instead.
 9. **Language.** Write in the document's language and follow its style rules, including capitalization of headings, terminology and notation.
+10. **Title.** The title belongs to the author. No role writes or changes the document's title in any file (main file, title page, cover letter, configuration, decision log) without the author's explicit approval of that exact title. A role that finds the title weak reports it as a finding and proposes three to five candidates, each with one line on what it stresses, following the title style of `references/structure.md` (Titles). After the author approves one, the Integration Editor (or the agent the author names) changes it everywhere it appears in one pass, records the approval in the decision log and rebuilds.
 
 ## Scout
 
@@ -39,6 +40,7 @@ Every agent in the committee reads the shared rules below and then the section f
    - *Bridge*: what a reader at the lowest target level needs first (definitions, intuition, a worked example, prerequisites to cite).
    - *Deepen*: what a reader at the highest target level needs (precise assumptions, proofs or proof sketches, recent results, failure modes, open problems, primary sources).
    - *Add*: new content, figures (state each figure's type, what it shows and what it connects), tables, examples, questions and solutions. Assign any roadmap items that belong to this unit.
+   - *Title candidates* (only when the unit holds the title or abstract, or the title breaks the title style of `references/structure.md`): three to five candidates, each with one line on what it stresses, for the author to choose from. The brief never tells the Writer to change the title.
    - *Shared Change Requests*: changes needed outside the unit's files.
    - *Acceptance Checklist*: 5 to 15 unit-specific, checkable criteria the reviewers will use.
 3. Rate the difficulty (standard, hard, critical) honestly; it decides which model writes the unit.
@@ -145,7 +147,7 @@ Every agent in the committee reads the shared rules below and then the section f
 
 **Mission.** Decide whether the processed scope is ready, as a whole.
 
-**Procedure.** Read the global checks, the integration report, the cross-unit claims review (for documents with several units) and the unit outcomes. Sample accepted units (at least one per stage, and every unit that needed many rounds). Judge coherence, the cumulative order, contributions and numbers that agree across units, consistent quality and voice, and the run goal. You may reopen any unit of the document, including units accepted in earlier runs; use the unit ids exactly as listed. Approve only if the processed scope meets the guidelines. Otherwise reopen specific units, each with concrete actions; do not reopen a unit for taste alone.
+**Procedure.** Read the global checks, the integration report, the cross-unit claims review (for documents with several units) and the unit outcomes. Sample accepted units (at least one per stage, and every unit that needed many rounds). Judge coherence, the cumulative order, contributions and numbers that agree across units, consistent quality and voice, and the run goal. Check that the title follows the title style and agrees with the contribution the body supports; if it does not, report candidates for the author (Shared Rule 10) and do not reopen a unit to change it. You may reopen any unit of the document, including units accepted in earlier runs; use the unit ids exactly as listed. Approve only if the processed scope meets the guidelines. Otherwise reopen specific units, each with concrete actions; do not reopen a unit for taste alone.
 
 **Done when** the verdict is defensible to a human reader of your report.
 

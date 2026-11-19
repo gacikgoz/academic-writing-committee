@@ -24,8 +24,10 @@
 # words); no hedge or passive percentages and no overall score, because such numbers invite
 # optimizing the number instead of the text. Written for this skill and not taken from the
 # sources: the hyphen and dash rules, the coordination and repetition rules, the generic-
-# phrase lexicon, the underselling, certainty and state-of-the-art rules, --disable,
-# --allow-terms and --list-rules.
+# phrase lexicon, the underselling, certainty and state-of-the-art rules, the house rules
+# (dashes in prose and tables, predicative hyphens, commas after conjunctions, paragraphs
+# opening with "To", acronyms in the abstract), the title-style rules (abbreviations in the
+# title, title length), --disable, --allow-terms and --list-rules.
 #
 # The license texts are in ../LICENSES/ (K-Dense-Inc-MIT.md, Claude-Code-Community-MIT.txt,
 # Vishal-Sachdev-MIT.txt). Standard library only. No network access. Input
@@ -37,6 +39,7 @@ Usage:
     python3 check_manuscript.py chapters/*.tex --min-severity warning
     python3 check_manuscript.py paper.tex --observational --json
     python3 check_manuscript.py book.tex --disable AND_CHAIN,HYPE_WORD --allow-terms "boosting,residual"
+    python3 check_manuscript.py paper.tex --disable DASH_IN_PROSE   # a venue that allows dashes
     python3 check_manuscript.py --list-rules
 
 Inputs: .md, .markdown, .tex, .texview (read as LaTeX) and .txt files, in reading order.
@@ -45,8 +48,32 @@ prose rules run. Rule groups: housekeeping (placeholders, floats, labels), mecha
 (hyphens, dashes, minus signs, repeated words), claims (overstatement, priority, absence,
 attribution, statistics, certainty, hype, underselling, causal wording with
 --observational) and style (wording, coordination with "and", repetition, sentence length,
-acronyms). --list-rules prints every rule id with its severity and a one-line description;
---disable switches rules off; --no-style switches off the whole style group.
+paragraph openings, acronyms, the document title). --list-rules prints every rule id with its severity and a
+one-line description; --disable switches rules off; --no-style switches off the whole style
+group.
+
+House rules (references/language-mechanics.md, "House Rules"). The default style has no en
+or em dash in prose, captions or table text (DASH_IN_PROSE, which also reads the cells of
+tabular environments and Markdown tables), no hyphen in a compound after a linking verb
+(PREDICATIVE_COMPOUND_HYPHEN, with LY_ADVERB_HYPHEN), no comma right after a conjunction or a
+sentence-initial connective (COMMA_AFTER_CONJUNCTION), no paragraph that begins with "To"
+(PARAGRAPH_STARTS_WITH_TO), and every acronym expanded in the body before it is used alone,
+with an abstract that uses none (ACRONYM_NOT_DEFINED, ACRONYM_USED_BEFORE_DEFINITION). While
+DASH_IN_PROSE is on, the older dash rules it subsumes (DOUBLE_HYPHEN, SPACED_EN_DASH,
+SPACED_EM_DASH, EM_DASH_DENSITY) and the rules that recommend an en dash (EPONYM_HYPHEN,
+EQUAL_PAIR_HYPHEN) stay silent, and HYPHEN_IN_RANGE and SPACED_HYPHEN advise "to" or a comma
+instead of a dash. A project whose guidelines relax the dash rule runs with
+--disable DASH_IN_PROSE and gets the earlier dash conventions back.
+
+Title style (references/structure.md, "Titles"). The document title is \title{...} in LaTeX
+(preamble or body; notes such as \thanks and \tnoteref and mathematics are removed), the YAML
+front-matter "title:" in Markdown or, when no file of the run has either, the first "# "
+heading of the first Markdown or text file. TITLE_ABBREVIATION reports a token of two or more
+capitals (UAV, LLMs, GPT-4) or a listed mixed-case acronym (IoT, LiDAR) in it; roman numerals,
+names given with --allow-terms, and a one-word system name that forms the whole part before
+the first colon of a title whose subtitle has at least three words ("VULCAN: A Benchmark for
+...") are not reported. TITLE_TOO_LONG is a note above 15 words and a warning above 20. Only
+the author approves a title; the checker does not judge whether a subtitle explains a name.
 
 Severities: error (clearly broken: placeholders, an empty file), warning (a mechanical error
 or a claim that needs evidence), info, printed as a note (a stylistic pattern). Every
@@ -111,18 +138,30 @@ RULES = (
     ("RANGE_AFTER_FROM_BETWEEN", "warning", "mechanics",
      "a dash range after \"from\" or \"between\" (from 2019-2023, between 5-10)"),
     ("SPACED_HYPHEN", "warning", "mechanics", "a spaced hyphen \" - \" used as a dash"),
+    ("DASH_IN_PROSE", "warning", "mechanics",
+     "house rule: an en or em dash (--, ---, \u2013, \u2014) in prose, captions or tables; "
+     "use a comma, colon, parentheses or \"to\""),
     ("DOUBLE_HYPHEN", "warning", "mechanics",
-     ".md and .txt only: -- or --- typed for a dash in prose"),
+     ".md and .txt only: -- or --- typed for a dash in prose (only with DASH_IN_PROSE off)"),
     ("SPACED_EN_DASH", "info", "mechanics",
-     "a spaced en dash between words (\" -- \" in LaTeX, \" \u2013 \") used as a break"),
+     "a spaced en dash between words (\" -- \" in LaTeX, \" \u2013 \") used as a break "
+     "(only with DASH_IN_PROSE off)"),
     ("SPACED_EM_DASH", "info", "mechanics",
-     "a spaced em dash (\" --- \" in LaTeX, or \" \u2014 \"); the house style is closed"),
+     "a spaced em dash (\" --- \" in LaTeX, or \" \u2014 \"); set closed (only with "
+     "DASH_IN_PROSE off)"),
     ("EPONYM_HYPHEN", "warning", "mechanics",
-     "an eponymous pair joined by a hyphen (Kullback-Leibler); use an en dash"),
+     "an eponymous pair joined by a hyphen (Kullback-Leibler); use an en dash (only with "
+     "DASH_IN_PROSE off: the house style keeps the hyphen)"),
     ("EQUAL_PAIR_HYPHEN", "info", "mechanics",
-     "two equal terms joined by a hyphen (encoder-decoder, input-output); en dash"),
+     "two equal terms joined by a hyphen (encoder-decoder, input-output); en dash (only "
+     "with DASH_IN_PROSE off)"),
     ("LY_ADVERB_HYPHEN", "warning", "mechanics",
      "a hyphen after an -ly adverb (widely-used, highly-accurate)"),
+    ("PREDICATIVE_COMPOUND_HYPHEN", "warning", "mechanics",
+     "house rule: a hyphenated compound after its noun and a linking verb (is well-known)"),
+    ("COMMA_AFTER_CONJUNCTION", "warning", "mechanics",
+     "house rule: a comma right after a sentence-initial connective (However, Thus,) or a "
+     "conjunction (, and, ; but,)"),
     ("HYPHEN_AS_MINUS", "info", "mechanics",
      "a hyphen-minus typed as a minus sign before a number in prose (-0.3)"),
     ("REPEATED_WORD", "warning", "mechanics", "the same word twice in a row (the the)"),
@@ -168,10 +207,19 @@ RULES = (
      "a content word (5+ letters) used three times within 40 words"),
     ("REPEATED_PHRASE", "info", "style",
      "a phrase of three or more words repeated within one paragraph"),
-    ("EM_DASH_DENSITY", "info", "style", "more than two em dashes in one paragraph"),
-    ("ACRONYM_NOT_DEFINED", "info", "style", "an acronym never expanded in the files checked"),
-    ("ACRONYM_USED_BEFORE_DEFINITION", "info", "style",
-     "an acronym used before the place where it is expanded"),
+    ("EM_DASH_DENSITY", "info", "style",
+     "more than two em dashes in one paragraph (only with DASH_IN_PROSE off)"),
+    ("PARAGRAPH_STARTS_WITH_TO", "warning", "style",
+     "house rule: a paragraph whose first word is \"To\" (To compare X, we ...)"),
+    ("ACRONYM_NOT_DEFINED", "warning", "style",
+     "house rule: an acronym never expanded in the body, or any acronym in the abstract"),
+    ("ACRONYM_USED_BEFORE_DEFINITION", "warning", "style",
+     "house rule: an acronym used alone before the place where the body expands it"),
+    ("TITLE_ABBREVIATION", "warning", "style",
+     "title style: an abbreviation or acronym in the document title (UAV, LLM, IoT); a "
+     "system name before the colon of a title with a subtitle is allowed"),
+    ("TITLE_TOO_LONG", "info/warning", "style",
+     "title style: a document title of more than 15 words (note) or 20 words (warning)"),
 )
 RULE_IDS = {rule[0] for rule in RULES}
 STYLE_RULES = {rule[0] for rule in RULES if rule[2] == "style"}
@@ -554,6 +602,52 @@ SPACED_EN_DASH_RE = re.compile(r"(?<=[A-Za-z)\]'\u2019]) {1,2}\u2013 {1,2}(?=[A-
 SPACED_EM_DASH_TEX_RE = re.compile(r"(?<=[^\s-]) {1,2}---(?!-) {1,2}(?=\S)")
 SPACED_EM_DASH_RE = re.compile(r"(?<=\S) {1,2}\u2014 {1,2}(?=\S)")
 EM_DASH_RE = re.compile(r"\u2014|(?<!-)---(?!-)")
+# House rule R1: any en or em dash (and the figure dash and horizontal bar). In LaTeX, -- and
+# --- outside mathematics, code, comments, citations, references and URLs, which are masked;
+# in Markdown and text files, -- or --- typed for a dash, as DOUBLE_HYPHEN reads them.
+TEX_DASH_RE = re.compile(r"(?<!-)-{2,3}(?!-)|[\u2012-\u2015]")
+PLAIN_DASH_RE = re.compile(r"(?<![-<!])-{2,3}(?![->])|[\u2012-\u2015]")
+DASH_RANGE_RE = re.compile(r"(\d[\d.,]*)\s?$")
+MD_TABLE_RULE_RE = re.compile(r"^\s*\|?[\s:|-]+\|?\s*$")
+# House rule R2: a hyphenated compound placed after its noun and a linking verb ("the result
+# is well-known") is open. The prefixes are those whose compounds are open after the noun;
+# -ly adverbs are LY_ADVERB_HYPHEN. A noun after the compound ("is a well-known result" has an
+# article, "is well-known work" a noun) is not matched: the compound must end the clause.
+PREDICATIVE_HYPHEN_RE = re.compile(
+    r"\b(?:is|are|was|were|be|been|being|remains?|remained|seems?|seemed|appears?|appeared|"
+    r"becomes?|became)\s+(?:not\s+|still\s+|also\s+)?"
+    r"((?:well|ill|better|best|little|lesser)-[a-z]+)\b(?![-\u2010\u2011])"
+    r"(?=\s*(?:[.,;:)\u2039]|$|\s(?:and|or|but|in|for|to|by|with|when|if|as|than|because|since|"
+    r"under|on|at|from|only|here|there)\b))",
+    re.IGNORECASE,
+)
+# House rule R3: no comma right after a conjunction or a sentence-initial connective. A comma
+# that closes a parenthetical or an introductory subordinate clause is not matched.
+CONNECTIVES = (
+    "On the other hand", "As a result", "In addition", "In contrast", "By contrast", "In turn",
+    "However", "Thus", "Therefore", "Hence", "Moreover", "Furthermore", "Additionally",
+    "Consequently", "Accordingly", "Nevertheless", "Nonetheless", "Conversely", "Similarly",
+    "Likewise", "Meanwhile", "Besides", "Otherwise", "Instead", "Further", "Also", "And",
+    "But", "So", "Yet", "Then", "Still", "Next", "First", "Second", "Third", "Fourth",
+    "Finally", "Lastly",
+)
+OPENING_CONNECTIVE_COMMA_RE = re.compile(
+    r"^[\"'(\[\u201c\u2018]{0,3}(" + "|".join(c.replace(" ", r"\s+") for c in CONNECTIVES)
+    + r")\s*,"
+)
+# The same connectives opening a clause after a semicolon or colon ("; however, the").
+CLAUSE_CONNECTIVE_COMMA_RE = re.compile(
+    r"[;:]\s+(" + "|".join(c.lower().replace(" ", r"\s+") for c in CONNECTIVES
+                          if c not in {"And", "But", "So", "Yet", "Then", "Still", "Next",
+                                       "First", "Second", "Third", "Fourth", "Also"})
+    + r")\s*,"
+)
+# ", and, " / ", but, " / " and, ": a comma right after a coordinating conjunction.
+CONJUNCTION_COMMA_RE = re.compile(r"(?<![\w/\u2039-])(and|but|or|nor)\s*,(?=\s|$)", re.IGNORECASE)
+# House rule R4: the first word of a paragraph is "To" ("To compare X, we ...").
+PARAGRAPH_TO_RE = re.compile(r"^[\s\"'(\[\u201c\u2018]{0,4}To\b(?![-\u2019'])")
+# A run-in heading: the text after \paragraph{...} on the same line is prose.
+RUNIN_HEADING_RE = re.compile(r"\\(?:sub)?paragraph\*?\s*(?:\[[^\]\n]{0,200}\])?\{[^{}\n]*\}")
 HYPHEN_MINUS_RE = re.compile(r"(?:(?<=[\s(\[=:;,])|^)-(\d{1,9}(?:\.\d{1,9})?)(?![\w\-]|[.,]\d)")
 LY_HYPHEN_RE = re.compile(r"(?<![\w-])([A-Za-z]{2,20}ly)-(?=[a-z])")
 NOT_LY_ADVERBS = set("""
@@ -613,15 +707,53 @@ EQUAL_PAIR_RE = re.compile(
 )
 
 ACRONYM_RE = re.compile(r"\b([A-Z]{2,6}[0-9]{0,2})s?\b")
+# Capitals that are not abbreviations a reader needs expanded: roman numerals, to-do
+# markers, units of storage, era and clock abbreviations, the logical OR, and a few country
+# and organisation names. The house rule (R5) expands every other abbreviation at first use in
+# the body, common ones included (artificial intelligence (AI), application programming
+# interface (API), graphics processing unit (GPU), confidence interval (CI)); a proper name of
+# a work, system or format gets a descriptive noun instead ("the BERT encoder"), and
+# --allow-terms names it so that it is not reported.
 ACRONYM_OK = {
-    "USA", "US", "UK", "EU", "UN", "DNA", "RNA", "PDF", "HTML", "URL", "HTTP", "HTTPS",
-    "ID", "OK", "CPU", "GPU", "RAM", "USB", "GPS", "IEEE", "ACM", "ISBN", "DOI", "ISO",
-    "ASCII", "TV", "AM", "PM", "BC", "AD", "CE", "BCE", "II", "III", "IV", "VI", "VII",
+    "USA", "US", "UK", "EU", "UN", "IEEE", "ACM", "ISO", "NVIDIA",
+    "OK", "OR", "AM", "PM", "BC", "AD", "CE", "BCE", "II", "III", "IV", "VI", "VII",
     "VIII", "IX", "XI", "XII", "XIII", "XIV", "XV", "XX", "TODO", "TBD", "FIXME", "XXX",
-    "KB", "MB", "GB", "TB", "PB", "FLOP", "FLOPS", "CI", "SD", "SE", "SEM", "IQR", "OR", "HR",
-    "AI", "API", "GPT", "NVIDIA",
+    "KB", "MB", "GB", "TB", "PB",
 }
 
+# Title style (references/structure.md, "Titles"). The document title is \title{...} in LaTeX
+# (preamble or body, with an optional [short] argument and \thanks or \tnoteref notes
+# removed), the YAML front-matter "title:" in Markdown, or, when no file of the run has either,
+# the first level-1 "# " heading of the first Markdown or text file.
+LATEX_TITLE_RE = re.compile(r"\\title\*?\s*(?:\[[^\]]{0,400}\]\s*)?\{")
+LATEX_TITLE_NOTE_RE = re.compile(
+    r"\\(?:thanks|tnoteref|tnotetext|fnref|footnote|footnotemark|corref|label|texorpdfstring)\b")
+YAML_TITLE_RE = re.compile(r"^title\s*:\s*(.*?)\s*$")
+MD_TITLE_RE = re.compile(r"^#\s+(\S.*?)\s*#*\s*$")
+# An abbreviation in a title: a token of two or more capitals (digits allowed, a plural "s"
+# allowed: UAV, LLMs, GPT-4, 3D is not one) or a mixed-case acronym from the list below.
+TITLE_CAPS_RE = re.compile(
+    r"(?<![A-Za-z0-9])([A-Z0-9]*[A-Z][A-Z0-9]*[A-Z][A-Z0-9]*)(s?)(?![A-Za-z0-9])")
+TITLE_MIXED_ACRONYMS = {
+    "IoT", "IIoT", "LiDAR", "eVTOL", "mmWave", "GenAI", "PhD", "MSc", "BSc", "AutoML", "DevOps",
+    "MLOps", "LLMOps", "RoBERTa", "ConvNet", "ConvNets", "XGBoost",
+}
+TITLE_MIXED_RE = re.compile(
+    r"(?<![A-Za-z0-9])(" + "|".join(sorted(TITLE_MIXED_ACRONYMS, key=len, reverse=True))
+    + r")(?![A-Za-z0-9])")
+# Roman numerals up to 39 (Part II, Volume XIV) are not abbreviations.
+ROMAN_RE = re.compile(r"X{0,3}(?:IX|IV|V?I{0,3})")
+TITLE_NOTE_WORDS = 15      # more words than this: a note
+TITLE_WARNING_WORDS = 20   # more words than this: a warning
+
+# A proper name introduced with a descriptive noun ("the VULCAN framework", "the BERT encoder",
+# "the GGUF file format"): the house rule's form for names, which a reader confirms.
+DESCRIPTIVE_NOUN_RE = re.compile(
+    r"^\s*(?:\u2039cite\u203a\s*)?(?:[a-z]+\s+){0,2}(?:framework|benchmark|dataset|corpus|"
+    r"encoder|decoder|model|method|algorithm|pipeline|library|toolkit|tool|format|protocol|"
+    r"standard|system|ranking|suite|metric|score|language|architecture|server|engine|platform|"
+    r"package|project|simulator|software|specification|function)s?\b"
+)
 ABBREVIATION_RE = re.compile(
     r"\b(?:e\.g|i\.e|et\s+al|etc|vs|cf|Figs?|Eqs?|Secs?|Refs?|No|Dr|Prof|Mr|Ms|Mrs|approx|"
     r"resp|viz|ca|Vol|Ch|Thm|Def|Tab|Alg|App)\.|\bpp?\.(?=\s*\d)|\b[A-Z]\.(?=\s+[A-Z])"
@@ -644,6 +776,11 @@ MATH_DISPLAY_ENVS = {
     "equation", "align", "alignat", "gather", "multline", "eqnarray", "displaymath", "flalign",
 }
 LATEX_VERBATIM_ENVS = {"verbatim", "lstlisting", "minted", "comment", "filecontents", "Verbatim"}
+# Skipped environments whose cells are text: DASH_IN_PROSE reads them (house rule R1).
+LATEX_TABLE_ENVS = {
+    "tabular", "tabularx", "longtable", "tabulary", "supertabular", "xltabular", "tblr",
+    "longtblr", "NiceTabular",
+}
 LATEX_FLOAT_ENVS = {
     "figure", "table", "algorithm", "wrapfigure", "subfigure", "longtable", "sidewaysfigure",
     "sidewaystable", "listing",
@@ -855,6 +992,91 @@ def mask_common(line: str) -> str:
     return NARRATIVE_CITE_RE.sub(f" {CITE} ", line)
 
 
+def _braced(text: str, start: int) -> int:
+    """Index just past the brace group whose "{" is at text[start - 1]; -1 if unbalanced."""
+    depth = 1
+    position = start
+    while position < len(text) and position - start < 4000:
+        char = text[position]
+        if char == "\\":
+            position += 2
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return position + 1
+        position += 1
+    return -1
+
+
+def clean_latex_title(title: str) -> str:
+    """Plain text of a LaTeX title: notes, mathematics and markup removed."""
+    out = []
+    position = 0
+    for match in LATEX_TITLE_NOTE_RE.finditer(title):
+        if match.start() < position:
+            continue
+        out.append(title[position:match.start()])
+        end = match.end()
+        brace = re.match(r"\s*(?:\[[^\]]{0,200}\])?\s*\{", title[end:])
+        if brace:
+            stop = _braced(title, end + brace.end())
+            end = stop if stop > 0 else len(title)
+        position = end
+    out.append(title[position:])
+    text = re.sub(r"\\\\(?:\[[^\]]{0,20}\])?|\\newline\b", " ", "".join(out))
+    text = mask_latex(text).replace(MATH, " ")
+    return " ".join(MARKER_RE.sub(" ", text).split())
+
+
+def extract_title(text: str, latex: bool) -> tuple[int, str, bool] | None:
+    """The document title of one file: (line, plain text, explicit), or None."""
+    lines = text.splitlines()
+    if latex:
+        stripped = "\n".join(LATEX_COMMENT_RE.sub("", line) for line in lines)
+        for match in LATEX_TITLE_RE.finditer(stripped):
+            if re.search(r"\\(?:re)?newcommand\*?\s*\{?\s*$",
+                         stripped[max(0, match.start() - 30):match.start()]):
+                continue   # \renewcommand{\title}: a definition, not the title
+            end = _braced(stripped, match.end())
+            if end < 0:
+                return None
+            title = clean_latex_title(stripped[match.end():end - 1])
+            if title:
+                return stripped.count("\n", 0, match.start()) + 1, title, True
+        return None
+    if lines and lines[0].strip() == "---":
+        for number, line in enumerate(lines[1:], start=2):
+            if line.strip() in {"---", "..."}:
+                break
+            found = YAML_TITLE_RE.match(line)
+            if not found:
+                continue
+            value = found.group(1)
+            if value in {"|", ">", "|-", ">-", ""}:   # a block scalar on the next lines
+                block = []
+                for follow in lines[number:]:
+                    if not follow.startswith((" ", "\t")) or not follow.strip():
+                        break
+                    block.append(follow.strip())
+                value = " ".join(block)
+            value = value.strip().strip("\"'").strip()
+            if value:
+                return number, " ".join(mask_markdown(value).replace(MATH, " ").split()), True
+    in_fence = False
+    for number, line in enumerate(lines, start=1):
+        if line.strip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            continue
+        found = None if in_fence else MD_TITLE_RE.match(line)
+        if found:
+            title = " ".join(MARKER_RE.sub(" ", mask_markdown(found.group(1))).split())
+            return (number, title, False) if title else None
+    return None
+
+
 class Document:
     """One input file split into raw lines, prose paragraphs and headings."""
 
@@ -864,12 +1086,18 @@ class Document:
         self.raw: list[tuple[int, str]] = []         # comment-stripped lines outside code
         self.paragraphs: list[list[tuple[int, str]]] = []
         self.paragraph_theorem: list[bool] = []       # paragraph lies in a theorem or proof
+        self.paragraph_item: list[bool] = []          # paragraph is a list item
+        self.paragraph_abstract: list[bool] = []      # paragraph lies in the abstract
+        self.table_lines: list[tuple[int, str]] = []  # masked text of table cells
         self.headings: list[tuple[int, str]] = []
+        # Document title: (line, text, explicit), explicit for \title or YAML "title:".
+        self.title: tuple[int, str, bool] | None = None
         self.labels: list[tuple[str, int, bool]] = []  # name, line, defined inside a float
         self.refs: list[tuple[str, int]] = []
         self.display_blocks = 0
         self.includes = 0   # line of the first \input, \include or \subfile in a LaTeX file
         self._parse(text)
+        self.title = extract_title(text, self.latex)
         with_math = sum(any(MATH in t for _, t in p) for p in self.paragraphs)
         # Mostly mathematics: "this proves" there is a derivation, not an empirical claim.
         self.math_heavy = (self.display_blocks + with_math) >= max(5, 0.2 * len(self.paragraphs))
@@ -877,9 +1105,13 @@ class Document:
     def _parse(self, text: str) -> None:
         current: list[tuple[int, str]] = []
         current_theorem = False
+        current_item = False
+        current_abstract = False
         skip_env: str | None = None
         float_depth = 0
         theorem_depth = 0
+        abstract_depth = 0
+        md_abstract = False
         inline_open = False
         in_fence = in_display = in_comment = in_front_matter = in_list = False
         lines = text.splitlines()
@@ -891,24 +1123,39 @@ class Document:
                     break
 
         def flush() -> None:
-            nonlocal current, current_theorem
+            nonlocal current, current_theorem, current_item, current_abstract
             if current:
                 self.paragraphs.append(current)
                 self.paragraph_theorem.append(current_theorem)
+                self.paragraph_item.append(current_item)
+                self.paragraph_abstract.append(current_abstract)
                 current = []
             current_theorem = False
+            current_item = False
+            current_abstract = False
+
+        def add_table_line(number: int, line: str) -> None:
+            # Column separators and row ends become a visible mark, so that a cell holding
+            # only a dash can be told from a dash between words.
+            line = re.sub(r"(?<!\\)&|\\\\", " \u2502 ", mask_inline_math(line, False)[0])
+            masked = mask_common(mask_latex(line))
+            if MARKER_RE.sub("", masked).strip():
+                self.table_lines.append((number, masked))
 
         def track_envs(line: str) -> None:
-            nonlocal float_depth, theorem_depth
+            nonlocal float_depth, theorem_depth, abstract_depth
             for kind, name in LATEX_ENV_TOKEN_RE.findall(line):
                 if kind == "begin":
                     float_depth += name in LATEX_FLOAT_ENVS
                     theorem_depth += name in THEOREM_ENVS
+                    abstract_depth += name == "abstract"
                 else:
                     if name in LATEX_FLOAT_ENVS and float_depth:
                         float_depth -= 1
                     if name in THEOREM_ENVS and theorem_depth:
                         theorem_depth -= 1
+                    if name == "abstract" and abstract_depth:
+                        abstract_depth -= 1
 
         for number, original in enumerate(lines, start=1):
             line = original
@@ -923,6 +1170,8 @@ class Document:
                 stripped = line.strip()
                 if skip_env:
                     end = re.search(r"\\end\{" + re.escape(skip_env) + r"\*?\}", line)
+                    if skip_env in LATEX_TABLE_ENVS:
+                        add_table_line(number, line[:end.start()] if end else line)
                     if end:
                         skip_env = None
                         track_envs(line[end.start():])
@@ -939,6 +1188,8 @@ class Document:
                 skipped = [name for name in begun if name in LATEX_SKIP_ENVS]
                 self.display_blocks += sum(name in MATH_DISPLAY_ENVS for name in begun)
                 if skipped:
+                    if skipped[-1] in LATEX_TABLE_ENVS:
+                        add_table_line(number, line)
                     if not re.search(r"\\end\{" + re.escape(skipped[-1]) + r"\*?\}", line):
                         skip_env = skipped[-1]
                     flush()
@@ -966,10 +1217,21 @@ class Document:
                     continue
                 if LATEX_ITEM_RE.match(stripped):
                     flush()   # each list item is its own paragraph
+                    current_item = True
                 line, inline_open = mask_inline_math(line, inline_open)
                 masked = mask_common(mask_latex(line))
                 if LATEX_HEADING_RE.match(stripped):
                     flush()
+                    runin = RUNIN_HEADING_RE.match(line.lstrip())
+                    rest = line.lstrip()[runin.end():] if runin else ""
+                    if runin and re.search(r"[A-Za-z]{2}", rest):
+                        # \paragraph{Title.} Text ...: the text is the paragraph's first line.
+                        title = line.lstrip()[:runin.end()]
+                        self.headings.append((number, mask_common(mask_latex(title))))
+                        current.append((number, mask_common(mask_latex(rest))))
+                        current_theorem = theorem_depth > 0
+                        current_abstract = abstract_depth > 0
+                        continue
                     self.headings.append((number, masked))
                     continue
                 if not re.search(r"[A-Za-z]{2}", MARKER_RE.sub("", masked)):
@@ -978,6 +1240,7 @@ class Document:
                     continue
                 current.append((number, masked))
                 current_theorem = current_theorem or theorem_depth > 0
+                current_abstract = current_abstract or abstract_depth > 0
                 continue
 
             # Markdown and plain text
@@ -1022,14 +1285,19 @@ class Document:
             if stripped.startswith("#"):
                 flush()
                 in_list = False
-                self.headings.append((number, mask_common(mask_markdown(stripped.lstrip("# ")))))
+                heading = stripped.lstrip("# ")
+                md_abstract = heading.strip(" *_:.").lower() == "abstract"
+                self.headings.append((number, mask_common(mask_markdown(heading))))
                 continue
             if stripped.startswith("|") or re.fullmatch(r"[-=*_\s]{3,}", stripped):
                 flush()
+                if stripped.startswith("|") and not MD_TABLE_RULE_RE.match(stripped):
+                    self.table_lines.append((number, mask_common(mask_markdown(line))))
                 continue
             if is_item:
                 flush()   # each list item is its own paragraph
                 in_list = True
+                current_item = True
             elif not line.startswith((" ", "\t")) and not current:
                 in_list = False
             masked = mask_common(mask_markdown(line))
@@ -1037,6 +1305,7 @@ class Document:
             masked = re.sub(r"^\s*\[[ xX]\]\s+", "", masked)   # task-list checkbox
             masked = re.sub(r"^\s*>+\s?", "", masked)
             current.append((number, masked))
+            current_abstract = current_abstract or md_abstract
         flush()
 
     def _scan_labels(self, line: str, number: int, in_float: bool) -> None:
@@ -1144,10 +1413,40 @@ def check_split_placeholders(doc: Document, report: Report) -> None:
                            f'"{quote(match.group(0))}" is still in the text')
 
 
+def check_dashes(doc: Document, text: str, starts: list[tuple[int, int]], report: Report,
+                 where: str = "") -> None:
+    """House rule R1: every en or em dash in masked prose, a caption or a table cell."""
+    pattern = TEX_DASH_RE if doc.latex else PLAIN_DASH_RE
+    for match in pattern.finditer(text):
+        dash = match.group(0)
+        before = text[match.start() - 1] if match.start() else " "
+        after = text[match.end():match.end() + 1]
+        if dash.startswith("-") and len(dash) == 2 and before.isspace() and after.isalpha():
+            continue   # a command-line option such as --json
+        kind = "em dash" if dash in {"---", "\u2014", "\u2015"} else "en dash"
+        context = text[max(0, match.start() - 20):match.end() + 20]
+        number = DASH_RANGE_RE.search(text[max(0, match.start() - 12):match.start()])
+        later = re.match(r"\s?([\u2212-]?\d[\d.,]*)", text[match.end():match.end() + 12])
+        if number and later:
+            advice = f'write "{number.group(1)} to {later.group(1)}"'
+        elif kind == "en dash" and before.isalpha() and after.isalpha():
+            advice = ("join a pair of names or equal terms with a hyphen (Kullback-Leibler) or "
+                      "rewrite it; otherwise use a comma, a colon or parentheses")
+        elif where and re.search(r"(?:^|[|\u2502])\s*$", text[:match.start()]) and re.match(
+                r"\s*(?:$|[|\u2502])", text[match.end():]):
+            advice = ("a cell holding only a dash: leave it empty, or write a word (none, not "
+                      "applicable) and explain it in the table note")
+        else:
+            advice = "use a comma, a colon, parentheses or a new sentence"
+        report.add(doc.path, line_at(starts, match.start()), "warning", "DASH_IN_PROSE",
+                   f'"{quote(context.strip())}": {kind}{where}; {advice}')
+
+
 def check_mechanics(doc: Document, text: str, starts: list[tuple[int, int]], report: Report,
                     allow: set[str]) -> None:
     """Hyphen, dash and minus rules, on one masked paragraph or heading."""
     path = doc.path
+    house = "DASH_IN_PROSE" not in report.disabled
     en_dash = "--" if doc.latex else "\u2013"
     minus = "$-$ in math mode" if doc.latex else "\u2212"
 
@@ -1173,14 +1472,60 @@ def check_mechanics(doc: Document, text: str, starts: list[tuple[int, int]], rep
         if (len(first) == 4 and first.isdigit() and 1500 <= int(first) <= 2100
                 and len(second) == 2 and second.isdigit() and int(second) <= 12):
             continue   # a year and month, 2024-05
-        report.add(path, at(match.start()), "warning", "HYPHEN_IN_RANGE",
-                   f'"{match.group(0)}": use an en dash ({en_dash}) '
-                   'for a range, or "to" in running prose')
+        if house:
+            report.add(path, at(match.start()), "warning", "HYPHEN_IN_RANGE",
+                       f'"{match.group(0)}": write "{first} to {second}" (house rule: no dash '
+                       "in a range)")
+        else:
+            report.add(path, at(match.start()), "warning", "HYPHEN_IN_RANGE",
+                       f'"{match.group(0)}": use an en dash ({en_dash}) '
+                       'for a range, or "to" in running prose')
     for match in SPACED_HYPHEN_RE.finditer(text):
         context = text[max(0, match.start() - 20):match.end() + 20]
+        marks = "a comma, a colon, parentheses or a new sentence" if house else \
+            "an em dash, a colon, commas or parentheses"
         report.add(path, at(match.start()), "warning", "SPACED_HYPHEN",
-                   f'"{quote(context.strip())}": a spaced hyphen is not a dash; use an em dash, '
-                   "a colon, commas or parentheses")
+                   f'"{quote(context.strip())}": a spaced hyphen is not a dash; use {marks}')
+    for match in PREDICATIVE_HYPHEN_RE.finditer(text):
+        compound = match.group(1)
+        if compound.lower() in allow:
+            continue
+        report.add(path, at(match.start(1)), "warning", "PREDICATIVE_COMPOUND_HYPHEN",
+                   f'"{quote(match.group(0))}": a compound after its noun is open '
+                   f'("{compound.replace("-", " ", 1)}"); keep the hyphen only before a noun')
+    if house:
+        # DASH_IN_PROSE subsumes DOUBLE_HYPHEN, SPACED_EN_DASH, SPACED_EM_DASH and
+        # EM_DASH_DENSITY; EPONYM_HYPHEN and EQUAL_PAIR_HYPHEN would advise an en dash.
+        check_dashes(doc, text, starts, report)
+    else:
+        check_dash_conventions(doc, text, starts, report, allow)
+    for match in LY_HYPHEN_RE.finditer(text):
+        word = match.group(1)
+        if word.lower() in NOT_LY_ADVERBS or word[0].isupper() and (
+                match.start() == 0 or not text[:match.start()].rstrip().endswith((".", "!", "?"))):
+            continue   # a proper noun such as Plotly-based (a sentence-initial adverb is checked)
+        compound = text[match.start():match.end() + 25].split()[0].rstrip(".,;:)")
+        if compound.lower() in allow:
+            continue
+        report.add(path, at(match.start()), "warning", "LY_ADVERB_HYPHEN",
+                   f'"{quote(compound)}": no hyphen after an -ly adverb '
+                   f'("{compound.replace("-", " ", 1)}")')
+    for match in HYPHEN_MINUS_RE.finditer(text):
+        report.add(path, at(match.start()), "info", "HYPHEN_AS_MINUS",
+                   f'"{match.group(0)}": use a minus sign ({minus}), '
+                   "not a hyphen")
+
+
+def check_dash_conventions(doc: Document, text: str, starts: list[tuple[int, int]],
+                           report: Report, allow: set[str]) -> None:
+    """The dash conventions for a project that relaxes the house rule (DASH_IN_PROSE off):
+    dashes typed as hyphens, spaced dashes, em-dash density, en dashes in name pairs."""
+    path = doc.path
+    en_dash = "--" if doc.latex else "\u2013"
+
+    def at(position: int) -> int:
+        return line_at(starts, position)
+
     if doc.path.suffix.lower() in PLAIN_SUFFIXES:
         for match in DOUBLE_HYPHEN_RE.finditer(text):
             before = text[match.start() - 1] if match.start() else " "
@@ -1207,7 +1552,7 @@ def check_mechanics(doc: Document, text: str, starts: list[tuple[int, int]], rep
         context = text[max(0, match.start() - 15):match.end() + 15]
         more = f" ({len(spaced)} in this paragraph)" if len(spaced) > 1 else ""
         report.add(path, at(match.start()), "info", "SPACED_EM_DASH",
-                   f'"{quote(context.strip())}": the house style sets em dashes closed{more}')
+                   f'"{quote(context.strip())}": set em dashes closed{more}')
     seen: set[str] = set()
     for match in EPONYM_RE.finditer(text):
         name = match.group(0)
@@ -1228,21 +1573,6 @@ def check_mechanics(doc: Document, text: str, starts: list[tuple[int, int]], rep
         report.add(path, at(match.start()), "info", "EQUAL_PAIR_HYPHEN",
                    f'"{name}": a relation between equal terms takes an en dash ({fixed}) in '
                    "Chicago style; many venues accept the hyphen, so follow the house style")
-    for match in LY_HYPHEN_RE.finditer(text):
-        word = match.group(1)
-        if word.lower() in NOT_LY_ADVERBS or word[0].isupper() and (
-                match.start() == 0 or not text[:match.start()].rstrip().endswith((".", "!", "?"))):
-            continue   # a proper noun such as Plotly-based (a sentence-initial adverb is checked)
-        compound = text[match.start():match.end() + 25].split()[0].rstrip(".,;:)")
-        if compound.lower() in allow:
-            continue
-        report.add(path, at(match.start()), "warning", "LY_ADVERB_HYPHEN",
-                   f'"{quote(compound)}": no hyphen after an -ly adverb '
-                   f'("{compound.replace("-", " ", 1)}")')
-    for match in HYPHEN_MINUS_RE.finditer(text):
-        report.add(path, at(match.start()), "info", "HYPHEN_AS_MINUS",
-                   f'"{match.group(0)}": use a minus sign ({minus}), '
-                   "not a hyphen")
     dashes = list(EM_DASH_RE.finditer(text))
     if len(dashes) > 2:
         report.add(path, at(dashes[2].start()), "info", "EM_DASH_DENSITY",
@@ -1401,6 +1731,17 @@ def check_sentence(doc: Document, line: int, sentence: str, context: Context,
         report.add(path, line, "info", "UNDERSELLING",
                    f'"{quote(match.group(0))}": state what was done or found at the strength '
                    "the evidence supports")
+
+    # House rule R3: no comma right after a conjunction or a sentence-initial connective.
+    commas = [m for m in (OPENING_CONNECTIVE_COMMA_RE.match(sentence),) if m]
+    commas += list(CLAUSE_CONNECTIVE_COMMA_RE.finditer(sentence))
+    commas += list(CONJUNCTION_COMMA_RE.finditer(sentence))
+    for match in sorted(commas, key=lambda m: m.start(1)):
+        word = " ".join(match.group(1).split())
+        report.add(path, line, "warning", "COMMA_AFTER_CONJUNCTION",
+                   f'"{word},": no comma right after a conjunction or connective; write '
+                   f'"{word} ..." (a comma that closes a parenthetical or an introductory '
+                   "clause stays)")
 
     # Style
     for match in LEXICON_RE.finditer(sentence):
@@ -1630,48 +1971,129 @@ def check_paragraph_style(doc: Document, text: str, starts: list[tuple[int, int]
                    "rephrase (fixed terms: --allow-terms)")
 
 
-def check_acronyms(docs: list[Document], report: Report) -> None:
+def check_acronyms(docs: list[Document], report: Report, allow: set[str] | None = None) -> None:
+    """House rule R5: every acronym is expanded at its first use in the body, before it is
+    used alone, and the abstract uses none (an expansion there does not count for the body).
+    Names given with --allow-terms (proper names of works, systems and formats, which take a
+    descriptive noun instead) are not reported."""
+    allow = allow or set()
     first_use: dict[str, tuple[tuple[int, int], Document, int]] = {}
     first_definition: dict[str, tuple[int, int]] = {}
     counts: dict[str, int] = {}
+    in_abstract: dict[str, tuple[Document, int]] = {}
+    named: dict[str, str] = {}   # acronym -> descriptive noun phrase at its first use
     order = 0
     glossary = False
     for doc in docs:
         if any("\\newacronym" in line or "\\gls{" in line or "\\acro{" in line
                for _, line in doc.raw):
             glossary = True
-        entries = [(n, t) for para in doc.paragraphs for n, t in para] + doc.headings
-        for number, text in sorted(entries):
+        entries = [(n, t, doc.paragraph_abstract[i])
+                   for i, para in enumerate(doc.paragraphs) for n, t in para]
+        entries += [(n, t, False) for n, t in doc.headings]
+        for number, text, abstract in sorted(entries, key=lambda e: (e[0], e[1])):
             order += 1   # position key: (order, offset), so a use and a definition on one line compare
             letters = [c for c in text if c.isalpha()]
             if letters and sum(c.isupper() for c in letters) > 0.6 * len(letters):
                 continue
             for match in ACRONYM_RE.finditer(text):
                 name = match.group(1)
-                if name in ACRONYM_OK or re.match(r"-\d", text[match.end():match.end() + 2]):
-                    continue   # a model name such as GPT-4 or T5-11B
+                if name in ACRONYM_OK or name.lower() in allow or re.match(
+                        r"-[A-Z0-9]", text[match.end():match.end() + 2]) or re.search(
+                        r"[A-Za-z0-9]-$", text[max(0, match.start() - 2):match.start()]):
+                    continue   # a name such as GPT-4, T5-11B, SMART-LLM or APIGen-MT
+                if abstract:
+                    in_abstract.setdefault(name, (doc, number))
+                    continue
                 counts[name] = counts.get(name, 0) + 1
-                first_use.setdefault(name, ((order, match.start()), doc, number))
+                if name not in first_use:
+                    first_use[name] = ((order, match.start()), doc, number)
+                    noun = DESCRIPTIVE_NOUN_RE.match(text[match.end():match.end() + 60])
+                    if noun:
+                        named[name] = " ".join(f"{name} {MARKER_RE.sub('', noun.group(0))}".split())
                 before = text[max(0, match.start() - 20):match.start()].rstrip()
                 after = text[match.end():match.end() + 40].lstrip()
+                # "the BERT encoder (Bidirectional Encoder ...)": a descriptive noun of up to
+                # three words, then a parenthetical expansion that starts with the acronym's
+                # first letter.
+                noun_expansion = re.match(r"(?:[a-z][\w-]*\s+){0,3}\(([A-Z][^()]{3,160})\)",
+                                          text[match.end():match.end() + 220].lstrip())
                 defined = (
                     (before.endswith("(") and after[:1] in {")", ";", ","})
                     or bool(re.match(r"\((?=[a-z])", after))
                     or bool(re.match(r"(?:stands|is short) for\b", after))
+                    or bool(noun_expansion and noun_expansion.group(1)[0] == name[0])
                 )
                 if defined:
                     first_definition.setdefault(name, (order, match.start()))
     if glossary:
         return
+    for name, (doc, number) in in_abstract.items():
+        report.add(doc.path, number, "warning", "ACRONYM_NOT_DEFINED",
+                   f"{name} is in the abstract, which uses no abbreviations: write the words, "
+                   "or a descriptive noun with a proper name (house rule)")
     for name, (used_at, doc, number) in sorted(first_use.items(), key=lambda item: item[1][0]):
         times = counts[name]
-        if name not in first_definition:
-            report.add(doc.path, number, "info", "ACRONYM_NOT_DEFINED",
+        if name not in first_definition and name in named:
+            report.add(doc.path, number, "warning", "ACRONYM_NOT_DEFINED",
+                       f"{name} (used {times} time{'s' if times != 1 else ''}) is not expanded "
+                       f"but is introduced with a descriptive noun (\"{named[name]}\"): "
+                       "enough for the proper name of a work, system or format (then list it "
+                       "with --allow-terms); expand any other abbreviation")
+        elif name not in first_definition:
+            report.add(doc.path, number, "warning", "ACRONYM_NOT_DEFINED",
                        f"{name} (used {times} time{'s' if times != 1 else ''}) is never "
-                       "expanded in the files checked")
+                       "expanded in the body of the files checked: write the words with the "
+                       f"abbreviation in parentheses at first use (\"... ({name})\"), or, for "
+                       "the name of a work, system or format, a descriptive noun and "
+                       "--allow-terms")
         elif first_definition[name] > used_at:
-            report.add(doc.path, number, "info", "ACRONYM_USED_BEFORE_DEFINITION",
-                       f"{name} appears before the place where it is expanded")
+            report.add(doc.path, number, "warning", "ACRONYM_USED_BEFORE_DEFINITION",
+                       f"{name} appears before the place where it is expanded; move the "
+                       "expansion to the first use in the body")
+
+
+def check_title(docs: list[Document], report: Report, allow: set[str]) -> None:
+    """Title style (references/structure.md, "Titles"): no abbreviation in the document title,
+    and a short title. Checked on every explicit title (\\title, YAML "title:") in the run, or,
+    when there is none, on the first "# " heading of the first Markdown or text file. A system
+    name that forms the whole part before the first colon is allowed when a subtitle of at least
+    three words follows: the subtitle is taken to say what the name is (whether it does is
+    checked by reading). Names given with --allow-terms are not reported."""
+    titles = [(doc, doc.title) for doc in docs if doc.title and doc.title[2]]
+    if not titles:
+        titles = [(doc, doc.title) for doc in docs if doc.title and not doc.latex][:1]
+    for doc, (line, title, _) in titles:
+        words = [w for w in title.split() if re.search(r"[A-Za-z0-9]", w)]
+        letters = [c for c in title if c.isalpha()]
+        shouting = bool(letters) and sum(c.isupper() for c in letters) > 0.6 * len(letters)
+        name = ""
+        head, colon, subtitle = title.partition(":")
+        if colon and len(head.split()) == 1 and len(subtitle.split()) >= 3:
+            name = head.strip()
+        found: list[str] = []
+        if not shouting:
+            hits = [(m.start(), m.group(1) + m.group(2), m.group(1))
+                    for m in TITLE_CAPS_RE.finditer(title)]
+            hits += [(m.start(), m.group(1), m.group(1)) for m in TITLE_MIXED_RE.finditer(title)]
+            for _, token, stem in sorted(hits):
+                if token == name or ROMAN_RE.fullmatch(stem):
+                    continue   # the system name before the colon, or a roman numeral
+                if token.lower() in allow or stem.lower() in allow:
+                    continue
+                if token not in found:
+                    found.append(token)
+        if found:
+            report.add(doc.path, line, "warning", "TITLE_ABBREVIATION",
+                       f"title uses {', '.join(found)}: write the words in a title "
+                       "(\"Unmanned Aerial Vehicle,\" not \"UAV\"); a system name is allowed "
+                       "as \"Name: what it does for whom\" (references/structure.md, Titles)")
+        if len(words) > TITLE_NOTE_WORDS:
+            severity = "warning" if len(words) > TITLE_WARNING_WORDS else "info"
+            report.add(doc.path, line, severity, "TITLE_TOO_LONG",
+                       f"title has {len(words)} words (\"{quote(title)}\"): a title is a short "
+                       "name, not a descriptive sentence; propose shorter candidates to the "
+                       "author, who approves the title")
 
 
 def check_floats(docs: list[Document], report: Report) -> None:
@@ -1733,11 +2155,18 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
         check_split_placeholders(doc, report)
         for number, heading in doc.headings:
             check_mechanics(doc, heading, [(0, number)], report, allow)
+        if "DASH_IN_PROSE" not in disabled:
+            for number, cells in doc.table_lines:
+                check_dashes(doc, cells, [(0, number)], report, " in a table cell")
         for index, paragraph in enumerate(doc.paragraphs):
             joined, starts = join_paragraph(paragraph)
             joined = mask_quotes(joined)
             sentences = sentences_of(paragraph, joined, starts)
             check_mechanics(doc, joined, starts, report, allow)
+            if not doc.paragraph_item[index] and PARAGRAPH_TO_RE.match(joined):
+                report.add(doc.path, paragraph[0][0], "warning", "PARAGRAPH_STARTS_WITH_TO",
+                           f'"{quote(joined.strip()[:60])}": begin with the subject and its '
+                           'verb ("We compare X by ..."), not with "To"')
             theorem = doc.paragraph_theorem[index]
             paragraph_math = MATH in joined
             for position, (line, sentence) in enumerate(sentences):
@@ -1765,7 +2194,8 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
                        "no prose found in this file (the other files of the run have prose)")
         else:
             report.add(doc.path, 1, "error", "EMPTY_MANUSCRIPT", "no prose found")
-    check_acronyms(docs, report)
+    check_acronyms(docs, report, allow)
+    check_title(docs, report, allow)
     check_floats(docs, report)
     lengths.sort()
     stats: dict[str, object] = {
@@ -1810,12 +2240,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--allow-terms", action="append", default=[], metavar="TERMS",
                         help="comma-separated fixed technical terms that may repeat or keep "
                         "their hyphen (REPEATED_CONTENT_WORD, REPEATED_PHRASE, "
-                        "EQUAL_PAIR_HYPHEN, LY_ADVERB_HYPHEN); repeatable")
+                        "EQUAL_PAIR_HYPHEN, LY_ADVERB_HYPHEN, PREDICATIVE_COMPOUND_HYPHEN), and "
+                        "names of works, systems or formats that need no expansion "
+                        "(ACRONYM_NOT_DEFINED, TITLE_ABBREVIATION); repeatable")
     parser.add_argument("--disable", action="append", default=[], metavar="RULE[,RULE...]",
                         help="switch off these rule ids; repeatable (see --list-rules)")
     parser.add_argument("--no-style", action="store_true",
                         help="switch off the style group (wording, coordination, repetition, "
-                        "sentence length, em-dash density, acronyms)")
+                        "sentence length, em-dash density, paragraph openings, acronyms, title)")
     parser.add_argument("--min-severity", choices=SEVERITIES + ("note",), default="info",
                         help="lowest severity to print (default: info, the same as note)")
     parser.add_argument("--json", action="store_true", help="print a JSON report")
