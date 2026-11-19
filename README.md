@@ -3,7 +3,7 @@
 **Academic writing for Claude that holds every sentence to the standard of a careful editor, and can put a whole committee of readers, reviewers and editors behind it when it matters.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Version 2.6.0](https://img.shields.io/badge/version-2.6.0-informational)
+![Version 2.7.0](https://img.shields.io/badge/version-2.7.0-informational)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin%20%2B%20skill-8A63D2)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB)
 
@@ -329,13 +329,14 @@ The full procedure is in [`committee/procedure.md`](skills/academic-writing-comm
 
 ## What It Enforces
 
-The guide rests on twelve principles and four standards that reviewers raise again and again. In short:
+The guide rests on fourteen principles and five standards that reviewers raise again and again. In short:
 
 - **Accuracy before fluency.** Observation, estimate, interpretation and speculation stay distinct. A fluent sentence is not evidence.
 - **Nothing invented.** No guessed citations, numbers, quotations, dates or methods. A missing fact becomes a visible `[[TODO: ...]]`, never plausible filler.
 - **Calibrated claims.** Verbs match the evidence: association is not cause, and "the first" needs a documented search. Overclaiming and underselling are both errors. The contributions, experiments, results, discussion and conclusion must agree with one another.
 - **Real references.** Every cited work exists, has been opened, and supports the sentence that cites it. A real work cited for something it does not say counts as seriously as a fake one.
 - **Clean language.** By default no en or em dash in prose, captions or tables, only the hyphens that are needed, no comma right after a conjunction or connective, no paragraph that opens with *To*, every abbreviation written out at first use in the body and none in the abstract, and no internal identifiers of the studied software (function names, code identifiers, file names, versions, hashes): each thing is described in plain words, and versions and hashes go to the availability statement or the evidence record. A project's guidelines may relax these house rules. Chains of *and*, repeated words and openings, formulaic transitions and stacked hedges go.
+- **A paper, not a lab ledger.** The finished text tells a research story (problem, idea, method, implementation, case study or evaluation, results, discussion), and each section says what it does and how it follows from the previous one. Each fact, caveat, limitation and definition is said once, in its best place, with one compact Limitations subsection. Audit and bookkeeping wording stays out of the running text; provenance is stated once, in the availability statement or one sentence of the evaluation. Sentences are short, jargon is explained at first use, and figures and tables are explained in the text and checked on the rendered pages.
 - **Titles the author approves.** A title is short and striking (*Name: what it does for whom*), leads with the method and the contribution, names the domain, uses no abbreviations, and claims nothing the evidence does not carry. The committee proposes three to five candidates and writes none into any file until the author approves one.
 - **The author's voice.** Text is edited, not replaced. Terminology and claims stay unless they are the problem, and every substantive change comes with its reason.
 - **Project rules first.** The venue's instructions and the project's own guidelines outrank the field's conventions, which outrank the skill.
@@ -531,7 +532,7 @@ python3 $S/check_citations.py paper.tex --bib refs.bib --online --cache refs-cac
 python3 $S/check_citations.py --reference-list references.tex --online
 ```
 
-- **`check_manuscript.py`** flags the house rules (any en or em dash in prose, captions or tables; a comma right after a conjunction or connective; a paragraph that opens with *To*; an abbreviation used before it is written out, or used in the abstract; an internal identifier such as a function name, code identifier, file name, version or hash in prose, captions, tables or figure labels), the title style (an abbreviation in the title, a title over 15 words), dash and hyphen misuse, chains of *and*, repeated words, phrases and sentence openings, stacked hedges, overclaiming and underselling words, formulaic phrasing, very long sentences, and references to unknown labels. Run `--list-rules` to see every rule, and `--disable RULE` or `--allow-terms` to tune it.
+- **`check_manuscript.py`** flags the house rules (any en or em dash in prose, captions or tables; a comma right after a conjunction or connective; a paragraph that opens with *To*; an abbreviation used before it is written out, or used in the abstract; an internal identifier such as a function name, code identifier, file name, version or hash in prose, captions, tables or figure labels), the title style (an abbreviation in the title, a title over 15 words), dash and hyphen misuse, chains of *and*, repeated words, phrases and sentence openings, stacked hedges, overclaiming and underselling words, formulaic phrasing, very long sentences, and references to unknown labels. It also reports sentences repeated across sections or files, and paragraphs written in audit vocabulary. Run `--list-rules` to see every rule, and `--disable RULE` or `--allow-terms` to tune it.
 - **`check_citations.py`** finds cited keys missing from the bibliography, entries never cited, duplicates, missing fields and malformed identifiers. With `--online` it looks every reference up at Crossref, arXiv, doi.org and DataCite. It reports identifiers that do not exist (`NOT_FOUND`) and records whose metadata do not match (`METADATA_MISMATCH`). With `--ledger sources.csv` it compares the cited keys with a source ledger.
 
 Both reports list candidates for a person to judge. A clean report proves nothing, and the checker cannot tell whether a work supports the sentence that cites it, so open each reference.
@@ -555,11 +556,13 @@ A unit costs about 24 to 28 agent calls in the default `full` mode, depending on
 
 ## Status
 
-Version 2.6.0. The writing guide, the checkers, the guided start, the recent-work search, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
+Version 2.7.0. The writing guide, the checkers, the guided start, the recent-work search, the no-committee option, the four committee modes and the effort setting are complete. The committee has run end to end on a small sample project. It is also being used, with a lean roster close to the `medium` mode, to revise a textbook of more than 4,000 pages; that revision is still in progress. Expect the committee's procedure and defaults to keep changing as that work teaches them.
 
 **New in 2.5.0.** House rules on dashes, hyphens, conjunction commas, paragraph openings and abbreviations (`references/language-mechanics.md`); title style and the title approval procedure (`references/structure.md`, Titles, and Shared Rule 10 in `committee/roles.md`); and new checker rules for both: `DASH_IN_PROSE`, `PREDICATIVE_COMPOUND_HYPHEN`, `COMMA_AFTER_CONJUNCTION`, `PARAGRAPH_STARTS_WITH_TO`, `TITLE_ABBREVIATION` and `TITLE_TOO_LONG`, with the acronym rules raised to warnings. A project whose venue allows dashes runs the checker with `--disable DASH_IN_PROSE`.
 
 **New in 2.6.0.** House rule R6: a manuscript contains no internal identifiers of the studied software (names of functions, operations and endpoints, code identifiers and enumeration values, file names, version numbers, hashes, internal format codes, dates of internal runs). Each thing is described in plain words, and reproducibility details go to the availability statement, a supplement or the evidence record (`references/language-mechanics.md`, with pointers from `references/evidence-and-citations.md` and `references/integrity-and-ai.md`). New checker rule `INTERNAL_IDENTIFIER` (warning); public tool names that may stay are listed with `--allow-terms`.
+
+**New in 2.7.0.** A paper is not a lab ledger, and it says each thing once (Core Principles 13 and 14, and a fifth standard on flow, readability and presentation, in `SKILL.md`). The text follows a narrative order, keeps the limitations in one compact subsection, states provenance once in plain words and tags no claim with an evidence level (`references/structure.md`, Narrative Order and Saying It Once). `figures-and-tables.md` gains a presentation pass on rendered pages. In the committee, the Developmental Editor writes a repetition map and the Writers keep each fact in one place. The language and presentation lenses check flow and repetition, and the Editor-in-Chief judges readability as a paper. Repetition without purpose and ledger-style running text are major. New checker rules: `CROSS_SECTION_REPEAT` (warning) and `LEDGER_LANGUAGE` (note).
 
 ---
 

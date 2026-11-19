@@ -5,21 +5,22 @@ How to organize papers, theses, textbooks and lecture notes, review articles, an
 ## Contents
 
 1. Choosing a Structure
-2. Titles
-3. Abstracts
-4. Introductions
-5. Related Work
-6. Methods
-7. Results
-8. Discussion, Limitations, and Conclusions
-9. Conference Papers in Computing
-10. Argumentative Papers
-11. Position Papers and Short Papers
-12. Review Articles
-13. Technical Reports
-14. Theses and Dissertations
-15. Textbooks and Lecture Notes
-16. End Matter
+2. Narrative Order and Saying It Once
+3. Titles
+4. Abstracts
+5. Introductions
+6. Related Work
+7. Methods
+8. Results
+9. Discussion, Limitations, and Conclusions
+10. Conference Papers in Computing
+11. Argumentative Papers
+12. Position Papers and Short Papers
+13. Review Articles
+14. Technical Reports
+15. Theses and Dissertations
+16. Textbooks and Lecture Notes
+17. End Matter
 
 ## Choosing a Structure
 
@@ -38,6 +39,29 @@ IMRaD is a default, not a law: study design, the reporting guideline, the articl
 - **Skim test.** A reader of the title, abstract, headings, first sentences of paragraphs, and displays knows what was done, why it matters, and what is new.
 - **Hourglass.** Open broad (why this matters), narrow to the precise question and evidence, and widen again to what it means.
 - **Parallel thread.** Each claim appears in the same words wherever it recurs: question, hypothesis, method, result, discussion. Number research questions or hypotheses and answer each by number.
+
+## Narrative Order and Saying It Once
+
+A finished paper reads as a research paper, not as a lab ledger or an evidence audit. Its reader wants to know the problem, the idea, how the idea works, and what was found. How the evidence was kept is the business of the record behind the paper, and it reaches the text only where a reader needs it.
+
+- **Narrative order.** Problem, idea, method, implementation, case study or evaluation, results, discussion. A research paper in another field keeps the same arc in its own skeleton (IMRaD above).
+- **Section openings.** Each section opens with one or two sentences that say what it does and how it follows from the previous one: "With the queue model defined, this section shows how the scheduler uses it to reserve slots." Nothing longer; a roadmap of every subsection is not needed.
+- **One idea per paragraph, connected.** Each paragraph states its point first and hands over to the next (`language-mechanics.md`, Fluency and Coherence). Terms, numbers, and claims are identical wherever they recur (`claims-and-coherence.md`).
+- **Say each thing once.** Each fact, caveat, limitation, definition, and claim has one best place: the definition where the term is first needed, the result in the results, the limitation in the Limitations subsection. Elsewhere use a short pointer ("the reserve size of Section 3.2") or nothing. The abstract, introduction, and conclusion summarize the same work at different depths (`claims-and-coherence.md`, Agreement Across Sections); they do not copy sentences from one another or from the body, and no paragraph repeats another.
+- **One Limitations subsection.** Collect the limitations in one compact subsection, usually at the end of the discussion. Each names the threat, its likely direction, and the boundary it sets (Discussion, Limitations, and Conclusions, below). At the claim itself, keep only the qualifier the claim needs, in a few words ("on the four clusters tested"), with a pointer if the reader needs more. The same caveat is not restated in the introduction, the results, the discussion, and the conclusion.
+- **Where provenance goes.** Versions, run identifiers, which script computed which number, counts of files, and archive locations belong in the data or code availability statement, a supplement, or the evidence record (house rule R6 in `language-mechanics.md`). The evaluation may carry one plain sentence on where its numbers come from: "All results come from one set of runs on the public traces listed under Data availability." The rest of the text says what was done and found, not how it was recorded.
+- **Plain words for the work, not the bookkeeping.** "Committed," "archived," "recorded run," "run family," "static reading at one revision," a repeated label such as "secondary analysis," "ledger," "the provenance of each number," and an evidence-level tag after every claim make a paper read like an audit. Say what happened instead: "we measured," "a second analysis of the same runs," "reading the source code."
+- **Readable in one pass.** Short, clear sentences; each term of art explained once, at first use, so that an engineer from a neighboring field can follow; a concrete example where an abstract description would make the reader work.
+
+| Ledger | Paper |
+|---|---|
+| "The recorded run family, committed and archived at one revision, yields a median latency of 41 ms (evidence level: measured)." | "On the four test clusters, the median latency was 41 ms (Table 2)." |
+| The single-workload caveat in the introduction, the results, the discussion, and the conclusion | the caveat once, in Limitations; "on one workload" at the headline claim |
+| "Section 5 reports a secondary analysis of the archived outputs, computed by the analysis script over 212 files." | "Section 5 analyzes the same runs a second way, by error type." |
+
+All values in the table are illustrative.
+
+**How to check.** Read only the first sentence of each section: together they should tell the story in order. Build a repetition map: list each fact, caveat, limitation, definition, and headline claim with every place it appears, and choose the one place it stays. `scripts/check_manuscript.py` reports sentences repeated across paragraphs, sections, or files (`CROSS_SECTION_REPEAT`) and paragraphs dense with audit vocabulary (`LEDGER_LANGUAGE`); a reader still has to find the paraphrased repeats.
 
 ## Titles
 
@@ -152,7 +176,7 @@ A reverse funnel:
 6. What should be tested next.
 
 - **One paragraph per main finding** usually works: state the finding, interpret it, compare it with related work, and draw the implication.
-- **Limitations are specific.** Name the source of bias, imprecision, missing data, or measurement error, and say which way it probably pushes the result. A generic paragraph added for form is worth nothing.
+- **Limitations are specific, and stated once.** Name the source of bias, imprecision, missing data, or measurement error, and say which way it probably pushes the result. Collect them in one compact Limitations subsection; elsewhere a brief qualifier at the claim is enough (Narrative Order and Saying It Once, above). A generic paragraph added for form is worth nothing.
 - **Turn limitations into boundary conditions.** Instead of "future research should examine other factors," write where the claim is expected to hold and where it should weaken, and why. End the discussion with a scope sentence: the claim plus its boundaries.
 - **Conclusions synthesize.** Restate the thesis in light of the evidence, show how the parts add up, and return to the opening puzzle. No new arguments, results, or citations. Do not end on an apology or on "more research is needed" alone.
 
@@ -264,4 +288,4 @@ A teaching text is judged by what the reader can do afterwards, not by coverage.
 
 ## End Matter
 
-Typical order, where the venue does not fix one: acknowledgments; author contributions; funding and the funder's role; competing interests; ethics, consent, and registration; data, code, and materials availability; AI-use disclosure; references; appendices and supplements. Treat every declaration as a record to verify, not as boilerplate (see `integrity-and-ai.md`).
+Typical order, where the venue does not fix one: acknowledgments; author contributions; funding and the funder's role; competing interests; ethics, consent, and registration; data, code, and materials availability; AI-use disclosure; references; appendices and supplements. Treat every declaration as a record to verify, not as boilerplate (see `integrity-and-ai.md`). The availability statement is the one place for provenance: what was archived, where, in which version, and how to rerun it. The body then need not say it again.

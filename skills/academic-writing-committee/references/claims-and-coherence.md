@@ -24,6 +24,8 @@ A claim is calibrated when a skeptical expert who reads the evidence would state
 
 - Decide the strength of a claim from the evidence first, then choose the verb (the ladder below), then the scope.
 - Put the qualifier on the uncertain element only, once. "Under assumption A2, the bound is tight" is calibrated; "the bound may possibly be somewhat tight" is not.
+- Qualify a claim briefly where it is made ("on the three benchmarks tested"), and give the full limitation once, in the Limitations subsection. A claim followed by a paragraph of caveats, or the same caveat repeated in every section, buries the result without making it more honest.
+- Calibration lives in the wording, not in labels. The ladder and the matrix below are working tools for the writer and the claims reviewer; their rungs, verdicts, and evidence levels stay in the reports. Do not tag every claim in the running text with an evidence level ("(evidence level: measured)", "(level B)", "(observed once)"): choose the verb and the scope that the evidence supports, and the reader understands.
 - Editing for fluency must not change claim strength. After every language pass, compare the claims before and after.
 
 ## Overclaiming
@@ -188,6 +190,7 @@ The abstract, introduction, discussion, limitations, and conclusion describe the
 - **Titles, headings, and captions make claims too.** A title such as "X Solves Y" or a caption that says "our method is better" is held to the same ladder as the text. Skimmers and program-committee reviewers read these first.
 - **The discussion interprets, it does not repeat** the results section. It relates findings to verified prior work, including work that disagrees, and gives alternative explanations.
 - **Limitations are honest and specific:** the source of bias or imprecision, which way it probably pushes the result, and the conditions under which the claims should hold. A limitation stated in the limitations section must not be contradicted by an unqualified claim in the abstract. Some venues require a dedicated limitations section or checklist; check the call.
+- **State a limitation once.** Each limitation is explained in full in one place, the Limitations subsection; where a claim depends on it, the claim carries a brief qualifier, with a pointer if the reader needs more. Agreement across sections means the same scope, not the same caveat paragraph copied into the abstract, the introduction, the results, and the conclusion (`structure.md`, Narrative Order and Saying It Once).
 - **Long documents.** What must agree depends on the type:
   - **Thesis:** the abstract, the introductory chapter, chapter summaries, and the concluding chapter; published papers incorporated as chapters are reconciled with the thesis's framing.
   - **Book:** the preface, chapter openings, and chapter summaries promise and deliver the same things.
@@ -200,7 +203,7 @@ The abstract, introduction, discussion, limitations, and conclusion describe the
 | Introduction: "we prove convergence"; Section 3: convergence shown empirically | introduction: "we observe convergence in all runs and prove it for the convex case (Theorem 1)" |
 | Limitations: "single site"; Abstract: "the intervention improves outcomes in primary care" | abstract: "in one primary-care network, the intervention was associated with ..." |
 
-**How to check.** Put the abstract, the contribution paragraph, the first paragraph of the discussion, the limitations, and the conclusion side by side. Compare them contribution by contribution, number by number, and qualifier by qualifier.
+**How to check.** Put the abstract, the contribution paragraph, the first paragraph of the discussion, the limitations, and the conclusion side by side. Compare them contribution by contribution, number by number, and qualifier by qualifier. Then look for the opposite failure: sentences copied between these places, and a caveat explained in full in more than one of them. `scripts/check_manuscript.py` reports copied sentences as `CROSS_SECTION_REPEAT`.
 
 ## Consistency of Terms, Notation, Numbers, and Names
 
@@ -236,7 +239,7 @@ The abstract, introduction, discussion, limitations, and conclusion describe the
 | C2 | Errors concentrate on long inputs | Intro "may perhaps relate to length"; Sec. 5 "concentrate on inputs > 2k tokens" | Figure 4 (rung 3) | intro undersells | intro: "concentrate on inputs longer than the training maximum" |
 | C3 | Method generalizes across domains | Abstract "generalizes across domains" | four domains, no out-of-domain test (rung 3, narrow) | overclaimed | "improves results in all four domains tested" |
 
-Verdicts: **supported**, **overclaimed**, **undersold**, **inconsistent**, **unsupported**, **orphan**. Any unsupported or overclaimed claim in the abstract or conclusion is a blocker.
+Verdicts: **supported**, **overclaimed**, **undersold**, **inconsistent**, **unsupported**, **orphan**. Any unsupported or overclaimed claim in the abstract or conclusion is a blocker. The matrix, its rungs, and its verdicts belong in the reports, never in the manuscript.
 
 ## References Must Be Real and Supportive
 
@@ -253,6 +256,7 @@ Every reference must exist, be described correctly, and support the specific sen
 - [ ] Abstract, introduction, discussion, and conclusion state the same contributions, in the same order and terms, with identical numbers and scope.
 - [ ] The conclusion adds no new claims, results, or citations.
 - [ ] Limitations are specific, give the likely direction of bias, and are not contradicted elsewhere.
+- [ ] Each limitation is stated in full once, in one compact Limitations subsection; claims carry only a brief qualifier; no evidence-level tags or audit labels on claims in the running text.
 - [ ] Terms, notation, numbers, names, counts, and cross-references are consistent throughout, including figures, tables, and supplements.
 - [ ] Every reference is real, correctly described, and supports the sentence that cites it.
 - [ ] The claim-evidence matrix has no open overclaimed, unsupported, or inconsistent rows.

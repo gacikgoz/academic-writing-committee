@@ -13,7 +13,8 @@ How to decide what deserves a display, build it honestly, caption it, and tie it
 7. Accessibility and Alt Text
 8. Flow Diagrams
 9. Figures in Teaching Texts
-10. Provenance and Final Review
+10. Presentation Pass on Rendered Pages
+11. Provenance and Final Review
 
 ## Prose, Table, or Figure
 
@@ -103,9 +104,22 @@ For participant flow in trials and record flow in systematic reviews, use the cu
 - Prefer a worked diagram of a small, concrete instance to an abstract schematic.
 - Write the caption so that a student reviewing only the figures recovers the main point.
 
+## Presentation Pass on Rendered Pages
+
+The source never shows what the reader sees. After every substantial revision, build the document, render its pages as images, and look at each page at reading size. Fix what the pass finds in the source, rebuild, and look again.
+
+- [ ] **Referred to and explained.** Every figure and table is mentioned in the text before it appears, and the text says what it shows and what to notice: "Latency falls as the reserve grows, until about 10% of the slots (Figure 4)" (illustrative), not "see Figure 4."
+- [ ] **Captions say what to notice.** Each caption names what is shown and the one thing the reader should see; it does not narrate how the display was produced (that goes to the record below).
+- [ ] **Near the first mention.** Each float sits on the page of its first mention or the next one. A float that drifts to the end of the section or chapter is moved in the source (placement options, a shorter display, or a different position of the float in the text).
+- [ ] **No large blank areas.** No page is half empty because a float did not fit; no column ends early above a full-width display. Shrink, split, or move the display, or shorten the text around it.
+- [ ] **Nothing cluttered.** No display tries to show everything: at most the series and columns the point needs, labels legible at print size, no decorative grid, no repeated legend. A table that repeats numbers the text already lists, or the text that reads out every cell of a table, is cut back to one of the two.
+- [ ] **Text and displays agree.** The numbers, names, and order in the text match the display they refer to.
+
+The **presentation** reviewer does this pass in every round that changes displays or layout, and the writer does it before handing a unit over (`committee/roles.md`).
+
 ## Provenance and Final Review
 
-Keep a short record for each display: identifier and version, source data, the script or manual steps that produced it, who made and who checked it, date, population and units, and license or permission status.
+Keep a short record for each display: identifier and version, source data, the script or manual steps that produced it, who made and who checked it, date, population and units, and license or permission status. The record stays with the evidence and the availability statement; captions and running text describe what the display shows, not how it was made.
 
 Before submission:
 

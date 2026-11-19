@@ -27,8 +27,9 @@
 # phrase lexicon, the underselling, certainty and state-of-the-art rules, the house rules
 # (dashes in prose and tables, predicative hyphens, commas after conjunctions, paragraphs
 # opening with "To", acronyms in the abstract, internal identifiers of the studied software),
-# the title-style rules (abbreviations in the title, title length), --disable, --allow-terms
-# and --list-rules.
+# the title-style rules (abbreviations in the title, title length), the rules that keep a
+# paper from reading like a lab ledger (repetition across sections and files, audit
+# vocabulary in the running text), --disable, --allow-terms and --list-rules.
 #
 # The license texts are in ../LICENSES/ (K-Dense-Inc-MIT.md, Claude-Code-Community-MIT.txt,
 # Vishal-Sachdev-MIT.txt). Standard library only. No network access. Input
@@ -41,6 +42,7 @@ Usage:
     python3 check_manuscript.py paper.tex --observational --json
     python3 check_manuscript.py book.tex --disable AND_CHAIN,HYPE_WORD --allow-terms "boosting,residual"
     python3 check_manuscript.py paper.tex --disable DASH_IN_PROSE   # a venue that allows dashes
+    python3 check_manuscript.py sections/*.tex --repeat-min-run 7 --repeat-jaccard 0.5
     python3 check_manuscript.py --list-rules
 
 Inputs: .md, .markdown, .tex, .texview (read as LaTeX) and .txt files, in reading order.
@@ -48,8 +50,9 @@ Mathematics, code, citations, cross-references, URLs and comments are masked bef
 prose rules run. Rule groups: housekeeping (placeholders, floats, labels), mechanics
 (hyphens, dashes, minus signs, repeated words), claims (overstatement, priority, absence,
 attribution, statistics, certainty, hype, underselling, causal wording with
---observational) and style (wording, coordination with "and", repetition, sentence length,
-paragraph openings, acronyms, the document title). --list-rules prints every rule id with its severity and a
+--observational) and style (wording, coordination with "and", repetition within a paragraph
+and across sections, audit wording, sentence length, paragraph openings, acronyms, the
+document title). --list-rules prints every rule id with its severity and a
 one-line description; --disable switches rules off; --no-style switches off the whole style
 group.
 
@@ -86,6 +89,24 @@ emphasis, so snake_case stays one token for every rule. The writer describes the
 plain words; versions, hashes and run identifiers go to the data or code availability
 statement, a supplement or the evidence record.
 
+A paper, not a lab ledger (SKILL.md, Core Principles 13 and 14; references/structure.md,
+"Narrative Order and Saying It Once"). CROSS_SECTION_REPEAT (a warning) compares every
+sentence of the run with the sentences of other paragraphs and other files, in reading order.
+Sentences become sequences of normalized content words (stopwords, mathematics, code,
+citations and quoted text removed). A pair is a repeat when it shares a run of 8 consecutive
+content words (--repeat-min-run), or when two sentences of 12 or more words share at least
+60% of their content words (Jaccard index, --repeat-jaccard). It is reported once, at the
+later sentence, with the file and line of the earlier one; several sentences of one paragraph
+that repeat the same earlier paragraph form one finding. Not compared: two sentences of one
+paragraph (REPEATED_PHRASE covers those), captions and other text in floats, block quotations
+(quote environments, Markdown "> "), and two theorem-like statements (a theorem restated in an
+appendix). The abstract and the conclusion may echo each other: a pair between them is
+reported only when both sentences have 20 words or more. LEDGER_LANGUAGE (a note) reports a
+paragraph with 3 or more audit terms (committed, archived, recorded, audit, ledger,
+provenance, evidence level, secondary analysis, static reading, run family, revision, hash),
+except under a heading about availability, reproducibility, artifacts, declarations,
+acknowledgments or supplements, where provenance belongs.
+
 Title style (references/structure.md, "Titles"). The document title is \title{...} in LaTeX
 (preamble or body; notes such as \thanks and \tnoteref and mathematics are removed), the YAML
 front-matter "title:" in Markdown or, when no file of the run has either, the first "# "
@@ -113,6 +134,7 @@ import argparse
 import bisect
 import functools
 import json
+import math
 import re
 import sys
 from collections import deque
@@ -231,6 +253,12 @@ RULES = (
      "a content word (5+ letters) used three times within 40 words"),
     ("REPEATED_PHRASE", "info", "style",
      "a phrase of three or more words repeated within one paragraph"),
+    ("CROSS_SECTION_REPEAT", "warning", "style",
+     "say it once: a sentence that repeats one in another paragraph or file of the run (8 "
+     "consecutive content words shared, or 60% of the content words of sentences of 12+ words)"),
+    ("LEDGER_LANGUAGE", "info", "style",
+     "a paragraph with 3 or more audit terms (committed, archived, recorded, ledger, "
+     "provenance, evidence level, revision, hash ...): narrative wording, one provenance statement"),
     ("EM_DASH_DENSITY", "info", "style",
      "more than two em dashes in one paragraph (only with DASH_IN_PROSE off)"),
     ("PARAGRAPH_STARTS_WITH_TO", "warning", "style",
@@ -595,6 +623,35 @@ chapters figure figures table tables equation equations appendix following respe
 REPETITION_WINDOW = 40
 PHRASE_WINDOW = 300   # a repeated phrase counts when its occurrences are this close (tokens)
 
+# CROSS_SECTION_REPEAT ("say it once"). Sentences are compared as sequences of normalized
+# content words (stopwords, mathematics, code, citations and quoted text removed). A pair is
+# reported when it shares a run of REPEAT_RUN consecutive content words, or when the content
+# words of two sentences of at least REPEAT_MIN_WORDS words overlap with a Jaccard index of at
+# least REPEAT_JACCARD. Captions and other text inside floats are not compared (a caption may
+# restate what the text says about its figure), nor are two sentences of one paragraph
+# (REPEATED_PHRASE covers those). The abstract and the conclusion may echo each other briefly:
+# a pair between them is reported only when both sentences have REPEAT_ECHO_WORDS words or more.
+REPEAT_RUN = 8
+REPEAT_MIN_WORDS = 12
+REPEAT_MIN_SET = 6
+REPEAT_JACCARD = 0.6
+REPEAT_ECHO_WORDS = 20
+CONCLUSION_HEADING_RE = re.compile(r"\bconclu|\bsummary\b|\bclosing remarks\b")
+
+# LEDGER_LANGUAGE: audit and bookkeeping vocabulary that makes a paper read like a lab ledger.
+# A paragraph with LEDGER_MIN_TERMS or more of them is a note. Sections whose job is
+# provenance (data or code availability, reproducibility, artifacts, declarations,
+# acknowledgments) are exempt.
+LEDGER_TERM_RE = re.compile(
+    r"\b(?:committed|archived|recorded|audit(?:s|ed|ing)?|ledgers?|provenance|"
+    r"evidence[\s-]+levels?|secondary[\s-]+analys[ie]s|static[\s-]+readings?|"
+    r"run[\s-]+famil(?:y|ies)|revisions?|hash(?:es)?)\b",
+    re.IGNORECASE,
+)
+LEDGER_MIN_TERMS = 3
+LEDGER_EXEMPT_HEADING_RE = re.compile(
+    r"availab|reproducib|artifact|artefact|declaration|acknowledg|supplement|provenance")
+
 # ---------------------------------------------------------------------------
 # Mechanics rules: hyphens, dashes, minus signs
 # ---------------------------------------------------------------------------
@@ -863,6 +920,8 @@ LATEX_FLOAT_ENVS = {
     "figure", "table", "algorithm", "wrapfigure", "subfigure", "longtable", "sidewaysfigure",
     "sidewaystable", "listing",
 }
+# Block quotations: someone else's words, not compared by CROSS_SECTION_REPEAT.
+LATEX_QUOTE_ENVS = {"quote", "quotation", "displayquote", "verse"}
 # Environments whose prose is a theorem or a proof: "prove" is expected there.
 THEOREM_ENVS = {
     "theorem", "lemma", "proposition", "corollary", "proof", "definition", "claim",
@@ -870,8 +929,12 @@ THEOREM_ENVS = {
     "lem", "prop", "cor", "defn", "dfn", "rem", "rmk",
 }
 LATEX_HEADING_RE = re.compile(
-    r"\\(?:part|chapter|section|subsection|subsubsection|paragraph|title|caption)\*?\b"
+    r"\\(part|chapter|section|subsection|subsubsection|paragraph|title|caption)\*?\b"
 )
+# Sectioning commands and their depth; \title and \caption open no section.
+LATEX_SECTION_LEVELS = {
+    "part": 0, "chapter": 1, "section": 2, "subsection": 3, "subsubsection": 4, "paragraph": 5,
+}
 LATEX_BEGIN_RE = re.compile(r"\\begin\{([A-Za-z0-9]+)\*?\}")
 LATEX_END_RE = re.compile(r"\\end\{([A-Za-z0-9]+)\*?\}")
 LATEX_ENV_TOKEN_RE = re.compile(r"\\(begin|end)\{([A-Za-z0-9]+)\*?\}")
@@ -1170,6 +1233,11 @@ class Document:
         self.paragraph_theorem: list[bool] = []       # paragraph lies in a theorem or proof
         self.paragraph_item: list[bool] = []          # paragraph is a list item
         self.paragraph_abstract: list[bool] = []      # paragraph lies in the abstract
+        self.paragraph_float: list[bool] = []         # paragraph lies in a float or is a caption
+        self.paragraph_quoted: list[bool] = []        # a block quotation (quote environment, > ...)
+        # Lower-case text of the headings above the paragraph, outermost first ("results /
+        # limitations"), for rules that depend on the section (conclusion, availability).
+        self.paragraph_heading: list[str] = []
         self.table_lines: list[tuple[int, str]] = []  # masked text of table cells
         # Masked node text of pictures and text of algorithms, with where it was found.
         self.figure_lines: list[tuple[int, str, str]] = []
@@ -1192,6 +1260,10 @@ class Document:
         current_theorem = False
         current_item = False
         current_abstract = False
+        current_float = False
+        current_quoted = False
+        quote_depth = 0
+        heading_stack: dict[int, str] = {}   # heading level -> lower-case heading text
         skip_env: str | None = None
         float_depth = 0
         theorem_depth = 0
@@ -1208,16 +1280,29 @@ class Document:
                     break
 
         def flush() -> None:
-            nonlocal current, current_theorem, current_item, current_abstract
+            nonlocal current, current_theorem, current_item, current_abstract, current_float
+            nonlocal current_quoted
             if current:
                 self.paragraphs.append(current)
                 self.paragraph_theorem.append(current_theorem)
                 self.paragraph_item.append(current_item)
                 self.paragraph_abstract.append(current_abstract)
+                self.paragraph_float.append(
+                    current_float or (not self.latex and bool(MD_CAPTION_RE.match(current[0][1]))))
+                self.paragraph_quoted.append(current_quoted)
+                self.paragraph_heading.append(
+                    " / ".join(heading_stack[level] for level in sorted(heading_stack)))
                 current = []
             current_theorem = False
             current_item = False
             current_abstract = False
+            current_float = False
+            current_quoted = False
+
+        def enter_heading(level: int, text: str) -> None:
+            for deeper in [key for key in heading_stack if key >= level]:
+                del heading_stack[deeper]
+            heading_stack[level] = " ".join(MARKER_RE.sub(" ", text).lower().split())
 
         def add_table_line(number: int, line: str) -> None:
             # Column separators and row ends become a visible mark, so that a cell holding
@@ -1246,13 +1331,16 @@ class Document:
                     self.figure_lines.append((number, masked, where))
 
         def track_envs(line: str) -> None:
-            nonlocal float_depth, theorem_depth, abstract_depth
+            nonlocal float_depth, theorem_depth, abstract_depth, quote_depth
             for kind, name in LATEX_ENV_TOKEN_RE.findall(line):
                 if kind == "begin":
+                    quote_depth += name in LATEX_QUOTE_ENVS
                     float_depth += name in LATEX_FLOAT_ENVS
                     theorem_depth += name in THEOREM_ENVS
                     abstract_depth += name == "abstract"
                 else:
+                    if name in LATEX_QUOTE_ENVS and quote_depth:
+                        quote_depth -= 1
                     if name in LATEX_FLOAT_ENVS and float_depth:
                         float_depth -= 1
                     if name in THEOREM_ENVS and theorem_depth:
@@ -1330,17 +1418,23 @@ class Document:
                 masked = mask_common(mask_latex(line))
                 if LATEX_HEADING_RE.match(stripped):
                     flush()
+                    level = LATEX_SECTION_LEVELS.get(LATEX_HEADING_RE.match(stripped).group(1))
                     runin = RUNIN_HEADING_RE.match(line.lstrip())
                     rest = line.lstrip()[runin.end():] if runin else ""
                     if runin and re.search(r"[A-Za-z]{2}", rest):
                         # \paragraph{Title.} Text ...: the text is the paragraph's first line.
                         title = line.lstrip()[:runin.end()]
                         self.headings.append((number, mask_common(mask_latex(title))))
+                        if level is not None:
+                            enter_heading(level, mask_common(mask_latex(title)))
                         current.append((number, mask_common(mask_latex(rest))))
                         current_theorem = theorem_depth > 0
                         current_abstract = abstract_depth > 0
+                        current_float = float_depth > 0
                         continue
                     self.headings.append((number, masked))
+                    if level is not None:
+                        enter_heading(level, masked)
                     continue
                 if not re.search(r"[A-Za-z]{2}", MARKER_RE.sub("", masked)):
                     if not MARKER_RE.search(masked):
@@ -1349,6 +1443,8 @@ class Document:
                 current.append((number, masked))
                 current_theorem = current_theorem or theorem_depth > 0
                 current_abstract = current_abstract or abstract_depth > 0
+                current_float = current_float or float_depth > 0
+                current_quoted = current_quoted or quote_depth > 0
                 continue
 
             # Markdown and plain text
@@ -1397,6 +1493,8 @@ class Document:
                 heading = stripped.lstrip("# ")
                 md_abstract = heading.strip(" *_:.").lower() == "abstract"
                 self.headings.append((number, mask_common(mask_markdown(heading))))
+                enter_heading(len(stripped) - len(stripped.lstrip("#")),
+                              mask_common(mask_markdown(heading)))
                 continue
             if stripped.startswith("|") or re.fullmatch(r"[-=*_\s]{3,}", stripped):
                 flush()
@@ -1412,6 +1510,8 @@ class Document:
             masked = mask_common(mask_markdown(line))
             masked = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", masked)
             masked = re.sub(r"^\s*\[[ xX]\]\s+", "", masked)   # task-list checkbox
+            if re.match(r"\s*>", masked):
+                current_quoted = True
             masked = re.sub(r"^\s*>+\s?", "", masked)
             current.append((number, masked))
             current_abstract = current_abstract or md_abstract
@@ -2206,6 +2306,142 @@ def check_paragraph_style(doc: Document, text: str, starts: list[tuple[int, int]
                    "rephrase (fixed terms: --allow-terms)")
 
 
+def check_ledger_language(doc: Document, index: int, text: str, report: Report) -> None:
+    """LEDGER_LANGUAGE: a paragraph dense with audit and bookkeeping vocabulary reads like a
+    lab ledger, not a paper. Availability, reproducibility, declaration and acknowledgment
+    sections, where provenance belongs, are exempt."""
+    if LEDGER_EXEMPT_HEADING_RE.search(doc.paragraph_heading[index]):
+        return
+    hits = [" ".join(match.group(0).lower().split()) for match in LEDGER_TERM_RE.finditer(text)]
+    if len(hits) < LEDGER_MIN_TERMS:
+        return
+    terms = ", ".join(f'"{term}"' for term in dict.fromkeys(hits))
+    report.add(doc.path, doc.paragraphs[index][0][0], "info", "LEDGER_LANGUAGE",
+               f"{len(hits)} audit terms in one paragraph ({terms}); tell the reader what was "
+               "done and found, and keep provenance to one plain statement (the data "
+               "availability statement, or one sentence in the evaluation)")
+
+
+def content_tokens(sentence: str) -> list[str]:
+    """The normalized content words of a sentence, in order: no stopwords, no masked
+    mathematics, code, citations or quoted text, no single letters."""
+    words: list[str] = []
+    for token in WORD_TOKEN_RE.findall(sentence):
+        if token.startswith("\u2039"):
+            continue
+        word = _normalize_word(token)
+        if len(word) >= 2 and word not in STOPWORDS:
+            words.append(word)
+    return words
+
+
+def _longest_common_run(a: list[str], b: list[str]) -> int:
+    best = 0
+    previous = [0] * (len(b) + 1)
+    for x in a:
+        row = [0] * (len(b) + 1)
+        for k, y in enumerate(b, start=1):
+            if x == y:
+                row[k] = previous[k - 1] + 1
+                best = max(best, row[k])
+        previous = row
+    return best
+
+
+class RepeatSentence:
+    """One sentence taking part in the CROSS_SECTION_REPEAT comparison."""
+
+    __slots__ = ("doc", "paragraph", "line", "text", "words", "zone", "theorem", "tokens")
+
+    def __init__(self, doc: Document, paragraph: int, line: int, text: str, zone: str,
+                 theorem: bool) -> None:
+        self.doc = doc
+        self.paragraph = paragraph
+        self.line = line
+        self.text = text
+        self.words = count_words(text)
+        self.zone = zone          # "abstract", "conclusion" or ""
+        self.theorem = theorem
+        self.tokens = content_tokens(text)
+
+
+def _may_pair(later: RepeatSentence, earlier: RepeatSentence) -> bool:
+    if later.doc is earlier.doc and later.paragraph == earlier.paragraph:
+        return False   # one paragraph: REPEATED_PHRASE
+    if later.theorem and earlier.theorem:
+        return False   # a theorem restated, for example in an appendix
+    if {later.zone, earlier.zone} == {"abstract", "conclusion"}:
+        return min(later.words, earlier.words) >= REPEAT_ECHO_WORDS
+    return True
+
+
+def check_cross_repeats(sentences: list[RepeatSentence], report: Report,
+                        run_length: int = REPEAT_RUN, jaccard: float = REPEAT_JACCARD) -> None:
+    """CROSS_SECTION_REPEAT: a sentence that says again what an earlier paragraph or file of
+    the run already said. Reported once, at the later occurrence, with the earlier location;
+    several sentences of one paragraph that repeat the same earlier paragraph form one finding."""
+    shingles: dict[tuple[str, ...], list[int]] = {}
+    frequency: dict[str, int] = {}
+    for item in sentences:
+        for word in set(item.tokens):
+            frequency[word] = frequency.get(word, 0) + 1
+    prefix_index: dict[str, list[int]] = {}
+    # (later document, later paragraph, earlier index) -> [(later index, evidence)]
+    groups: dict[tuple[int, int, int], list[tuple[int, str]]] = {}
+    group_of_paragraph: dict[tuple[int, int, int, int], tuple[int, int, int]] = {}
+    for i, item in enumerate(sentences):
+        tokens = item.tokens
+        match: tuple[int, str] | None = None
+        # A long run of shared consecutive content words.
+        own = [tuple(tokens[k:k + run_length]) for k in range(len(tokens) - run_length + 1)]
+        for shingle in own:
+            for j in shingles.get(shingle, ()):
+                if _may_pair(item, sentences[j]) and (match is None or j < match[0]):
+                    run = _longest_common_run(tokens, sentences[j].tokens)
+                    match = (j, f"{run} consecutive content words in common")
+        for shingle in own:
+            bucket = shingles.setdefault(shingle, [])
+            if len(bucket) < 4:
+                bucket.append(i)
+        # A high overlap of the content words of two longer sentences (prefix filtering on
+        # the rarest words keeps this close to linear).
+        words = set(tokens)
+        if item.words >= REPEAT_MIN_WORDS and len(words) >= REPEAT_MIN_SET:
+            ordered = sorted(words, key=lambda word: (frequency[word], word))
+            needed = math.ceil(jaccard * len(words) - 1e-9)   # shared words required
+            prefix = ordered[:len(words) - needed + 1]
+            candidates = {j for word in prefix for j in prefix_index.get(word, ())}
+            if match is None:
+                best: tuple[float, int] | None = None
+                for j in sorted(candidates):
+                    other = set(sentences[j].tokens)
+                    if not jaccard * len(words) <= len(other) <= len(words) / jaccard:
+                        continue
+                    score = len(words & other) / len(words | other)
+                    if score >= jaccard and _may_pair(item, sentences[j]) \
+                            and (best is None or score > best[0]):
+                        best = (score, j)
+                if best is not None:
+                    match = (best[1], f"{round(100 * best[0])}% of their content words in common")
+            for word in prefix:
+                prefix_index.setdefault(word, []).append(i)
+        if match is None:
+            continue
+        earlier = sentences[match[0]]
+        key = (id(item.doc), item.paragraph, id(earlier.doc), earlier.paragraph)
+        group = group_of_paragraph.setdefault(key, (id(item.doc), item.paragraph, match[0]))
+        groups.setdefault(group, []).append((i, match[1]))
+    for (_, _, j), hits in groups.items():
+        earlier = sentences[j]
+        first = sentences[hits[0][0]]
+        where = (f"line {earlier.line}" if earlier.doc is first.doc
+                 else f"{earlier.doc.path}:{earlier.line}")
+        count = f"{len(hits)} sentences of this paragraph repeat" if len(hits) > 1 else "repeats"
+        report.add(first.doc.path, first.line, "warning", "CROSS_SECTION_REPEAT",
+                   f'{count} {where} ("{quote(earlier.text)}"; {hits[0][1]}): say it once, '
+                   "in its best place, and point there from here or cut it")
+
+
 def check_acronyms(docs: list[Document], report: Report, allow: set[str] | None = None) -> None:
     """House rule R5: every acronym is expanded at its first use in the body, before it is
     used alone, and the abstract uses none (an expansion there does not count for the body).
@@ -2385,6 +2621,8 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
     topic = heading_terms(docs)
     lengths: list[int] = []
     empty: list = []
+    repeat_sentences: list[RepeatSentence] = []
+    compare_repeats = "CROSS_SECTION_REPEAT" not in disabled
     for doc in docs:
         terms = topic | document_terms([doc])
         check_raw_lines(doc, report)
@@ -2416,6 +2654,15 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
                 check_sentence(doc, line, sentence, context, args, report)
             if not STYLE_RULES <= disabled:
                 check_paragraph_style(doc, joined, starts, sentences, report, allow, terms)
+            if "LEDGER_LANGUAGE" not in disabled:
+                check_ledger_language(doc, index, joined, report)
+            if compare_repeats and not doc.paragraph_float[index] \
+                    and not doc.paragraph_quoted[index]:
+                zone = ("abstract" if doc.paragraph_abstract[index] else
+                        "conclusion" if CONCLUSION_HEADING_RE.search(doc.paragraph_heading[index])
+                        else "")
+                repeat_sentences.extend(RepeatSentence(doc, index, line, sentence, zone, theorem)
+                                        for line, sentence in sentences)
         if not doc.paragraphs and not doc.headings:
             if doc.includes:
                 report.add(doc.path, doc.includes, "info", "INCLUDES_ONLY",
@@ -2432,6 +2679,8 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
                        "no prose found in this file (the other files of the run have prose)")
         else:
             report.add(doc.path, 1, "error", "EMPTY_MANUSCRIPT", "no prose found")
+    if compare_repeats:
+        check_cross_repeats(repeat_sentences, report, args.repeat_min_run, args.repeat_jaccard)
     check_acronyms(docs, report, allow)
     check_title(docs, report, allow)
     check_floats(docs, report)
@@ -2475,6 +2724,14 @@ def build_parser() -> argparse.ArgumentParser:
                         help="report sentences longer than this as a note (default: 40)")
     parser.add_argument("--very-long-sentence-words", type=int, default=60,
                         help="report sentences longer than this as a warning (default: 60)")
+    parser.add_argument("--repeat-min-run", type=int, default=REPEAT_RUN, metavar="N",
+                        help="CROSS_SECTION_REPEAT: shared consecutive content words that make "
+                        f"two sentences a repeat (default: {REPEAT_RUN}; 6 or 7 for a stricter "
+                        "revision pass)")
+    parser.add_argument("--repeat-jaccard", type=float, default=REPEAT_JACCARD, metavar="X",
+                        help="CROSS_SECTION_REPEAT: share of common content words (Jaccard "
+                        f"index) that makes two sentences of {REPEAT_MIN_WORDS} or more words a "
+                        f"repeat (default: {REPEAT_JACCARD}; 0.5 for a stricter pass)")
     parser.add_argument("--allow-terms", action="append", default=[], metavar="TERMS",
                         help="comma-separated fixed technical terms that may repeat or keep "
                         "their hyphen (REPEATED_CONTENT_WORD, REPEATED_PHRASE, "
@@ -2485,8 +2742,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--disable", action="append", default=[], metavar="RULE[,RULE...]",
                         help="switch off these rule ids; repeatable (see --list-rules)")
     parser.add_argument("--no-style", action="store_true",
-                        help="switch off the style group (wording, coordination, repetition, "
-                        "sentence length, em-dash density, paragraph openings, acronyms, title)")
+                        help="switch off the style group (wording, coordination, repetition "
+                        "within and across sections, ledger wording, sentence length, em-dash "
+                        "density, paragraph openings, acronyms, title)")
     parser.add_argument("--min-severity", choices=SEVERITIES + ("note",), default="info",
                         help="lowest severity to print (default: info, the same as note)")
     parser.add_argument("--json", action="store_true", help="print a JSON report")
@@ -2514,6 +2772,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--max-sentence-words and --very-long-sentence-words must be at least 1")
     if args.very_long_sentence_words < args.max_sentence_words:
         parser.error("--very-long-sentence-words must not be smaller than --max-sentence-words")
+    if args.repeat_min_run < 3:
+        parser.error("--repeat-min-run must be at least 3")
+    if not 0.2 <= args.repeat_jaccard <= 1.0:
+        parser.error("--repeat-jaccard must be between 0.2 and 1.0")
     args.disabled = [code.upper() for code in _split_list(args.disable)]
     unknown = sorted(set(args.disabled) - RULE_IDS)
     if unknown:

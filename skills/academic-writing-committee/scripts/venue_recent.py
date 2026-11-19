@@ -27,7 +27,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-UA = "academic-writing-committee/2.6 (venue_recent.py; +https://github.com/gacikgoz/academic-writing-committee)"
+UA = "academic-writing-committee/2.7 (venue_recent.py; +https://github.com/gacikgoz/academic-writing-committee)"
 API = "https://api.crossref.org"
 
 

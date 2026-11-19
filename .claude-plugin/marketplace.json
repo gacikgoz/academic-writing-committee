@@ -10,7 +10,7 @@
       "name": "academic-writing-committee",
       "source": "./",
       "description": "Academic writing guide, publication-type profiles, manuscript and citation checkers, and an optional multi-agent writing committee (writers, readers, reviewers, editors). Run with --no-committee for plain single-session academic writing.",
-      "version": "2.6.0"
+      "version": "2.7.0"
     }
   ]
 }

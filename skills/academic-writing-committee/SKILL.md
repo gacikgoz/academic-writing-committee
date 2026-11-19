@@ -53,7 +53,7 @@ The skill can always run as plain academic writing, with no committee: one sessi
 - **Write** and **Check** run exactly as in the table above; they never use the committee.
 - **Review** is the quick review of `references/review-and-revision.md`: read the manuscript yourself, report findings by severity, and change nothing. Do not run `prepare_run.py` or launch a workflow.
 - **Committee** becomes a single-session revision. Work through the document one unit at a time (a chapter or section, in reading order) as in Write mode, against the project's guidelines when it has them. For each unit, read it as a newcomer and as a referee would, revise it, run both checkers and the project's build, and fix what they find before moving on. Keep the author's text where no rule requires a change. Nothing is written to the committee's ledger.
-- The principles, the four standards, the process, the checklists and the checkers below apply unchanged.
+- The principles, the five standards, the process, the checklists and the checkers below apply unchanged.
 
 Say once, at the start, that the run is without a committee.
 
@@ -122,8 +122,10 @@ Name the type, its primary judge, and the judge's decision before planning or re
 10. **Write for the adjacent-field reader.** Define terms at first use, prefer plain words, and use nothing before it has been introduced.
 11. **Sources are real, opened, and supportive.** Every cited work exists, has been read, and supports the sentence that cites it.
 12. **Confidential material stays where it is authorized.** Unpublished manuscripts, reviews, grant applications, and sensitive data do not go to outside services, AI tools included, without authorization.
+13. **A paper is not a lab ledger.** The finished text tells a research story: problem, idea, method, implementation, case study or evaluation, results, discussion. Audit and bookkeeping wording ("committed," "archived," "recorded run," "run family," an evidence-level tag on every claim, which script computed what, counts of files) stays out of the running text. Provenance is stated once, in plain words, where a reader needs it: the data availability statement, or one sentence in the evaluation.
+14. **Say it once.** Each fact, caveat, limitation, definition, and claim appears in one best place; elsewhere a short pointer or nothing. Limitations go into one compact Limitations subsection, with only a brief qualifier at the claim itself. No paragraph repeats another.
 
-## Four Standards Every Text Meets
+## Five Standards Every Text Meets
 
 Reviewers often raise these points. Each standard has a reference with the full rules, and a checker finds candidates.
 
@@ -150,6 +152,13 @@ Reviewers often raise these points. Each standard has a reference with the full 
 - Cite only works you have found and opened. Check authors, title, venue, year, and identifier (DOI, arXiv identifier, ISBN, or publisher page) against the work itself.
 - A reference that cannot be verified is removed or replaced with a visible `[[TODO: source for X]]`; the sentence it supported is narrowed, supported by other verified evidence, or marked unresolved for the author. A real work cited for something it does not say is as serious as a fake one.
 - `scripts/check_citations.py --online` looks every reference up at Crossref, arXiv, doi.org, and DataCite. It reports DOIs and arXiv identifiers that do not exist (NOT_FOUND) and records whose metadata do not match; references it cannot confirm are UNVERIFIED or URL_ONLY and must be checked by search. It cannot tell whether a work supports its sentence, so open each reference you cite.
+
+**5. A paper, not a ledger: flow, readability, presentation** (`references/structure.md`, Narrative Order and Saying It Once; `references/figures-and-tables.md`)
+- The paper runs in narrative order, and each section opens by saying what it does and how it follows from the previous one. Paragraphs have one idea and connect; terms, numbers, and claims are identical everywhere.
+- Each thing is said once (principle 14). The limitations sit in one compact subsection; provenance sits in the availability statement or one sentence of the evaluation (principle 13).
+- Short, clear sentences; jargon explained once, at first use, so that an engineer from a neighboring field follows the paper in one pass; concrete examples rather than abstract bookkeeping.
+- Every figure and table is referred to and explained, its caption says what to notice, it sits near its first mention, and the rendered pages show no clutter and no large blank areas. Render the pages and look at them.
+- `scripts/check_manuscript.py` reports sentences repeated across sections or files (`CROSS_SECTION_REPEAT`) and paragraphs dense with audit vocabulary (`LEDGER_LANGUAGE`).
 
 ## Process
 
@@ -216,6 +225,7 @@ Reviewers often raise these points. Each standard has a reference with the full 
 ### Section
 
 - [ ] The section does the job its place in the structure requires, and nothing else.
+- [ ] It opens by saying what it does and how it follows from the previous section; nothing in it repeats another section.
 - [ ] The first sentences of its paragraphs, read alone, give its argument.
 - [ ] Results are separate from interpretation, unless the venue merges them.
 - [ ] Each effect has a mechanism; each limitation is specific.

@@ -6,7 +6,7 @@ The two scripts in `scripts/` are adapted works, not unchanged copies. Each name
 
 Nothing in this skill comes from `wentorai/research-claw`, which is under the Business Source License.
 
-The rest of the skill is original work written for this plugin and draws on none of the five sources: `references/publication-types.md`, `references/language-mechanics.md`, `references/claims-and-coherence.md`, the modes, publication types and "Four Standards" sections of `SKILL.md`, everything under `committee/`, `profiles/`, `templates/` and `workflow/`, and `scripts/prepare_run.py`. The language-mechanics, repetition and calibration rules of the two checkers are also original additions.
+The rest of the skill is original work written for this plugin and draws on none of the five sources: `references/publication-types.md`, `references/language-mechanics.md`, `references/claims-and-coherence.md`, the modes, publication types and "Five Standards" sections of `SKILL.md`, everything under `committee/`, `profiles/`, `templates/` and `workflow/`, and `scripts/prepare_run.py`. The language-mechanics, repetition and calibration rules of the two checkers are also original additions.
 
 **License of this skill.** The synthesis text and the scripts are released under the MIT License. Any copy or adaptation must keep the source notices in `LICENSES/` and this file.
 

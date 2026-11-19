@@ -80,7 +80,7 @@
   },
   "claims": {
    "key": "claims",
-   "focus": "calibration and coherence of claims: no overclaiming (unsupported superlatives, 'prove' for empirical results, 'state of the art' without dated evidence, generalizing beyond the evidence) and no underselling (stacked hedges, buried or vague contributions); every contribution stated in the abstract and introduction is supported by specific evidence in the body and restated consistently in the discussion and conclusion; limitations are honest; numbers and claims agree everywhere they appear",
+   "focus": "calibration and coherence of claims: no overclaiming (unsupported superlatives, 'prove' for empirical results, 'state of the art' without dated evidence, generalizing beyond the evidence) and no underselling (stacked hedges, buried or vague contributions); every contribution stated in the abstract and introduction is supported by specific evidence in the body and restated consistently in the discussion and conclusion; limitations are honest, specific and stated once, in one compact Limitations subsection, with only a brief qualifier where a claim depends on them; no evidence-level tags or audit labels on claims in the running text; numbers and claims agree everywhere they appear",
    "model": "opus",
    "effort": "high"
   },
@@ -110,13 +110,13 @@
   },
   "presentation": {
    "key": "presentation",
-   "focus": "the rendered document: figures, tables, equations, algorithms, lists, headings and layout; legibility at print size, labels and units, captions that say what to notice, every figure and table referred to and explained in the text",
+   "focus": "the rendered document: figures, tables, equations, algorithms, lists, headings and layout; legibility at print size, labels and units, captions that say what to notice, every figure and table referred to and explained in the text; render the pages and look: floats near their first mention, no clutter and no large blank areas; the paper reads as a research narrative (problem, idea, method, implementation, case study or evaluation, results, discussion), each section opening with what it does and how it follows from the previous one, and no section repeating another",
    "model": "sonnet",
    "effort": "medium"
   },
   "language": {
    "key": "language",
-   "focus": "fluency and coherence: paragraph flow and transitions, one idea per paragraph, consistent terminology, no repetitive wording or formulaic transitions, the house rules (no en or em dashes, only needed hyphens, no comma right after a conjunction or connective, no paragraph opening with 'To', every abbreviation written out at first use and none in the abstract, no internal identifiers such as function names, versions or hashes), no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
+   "focus": "fluency, coherence and readability: paragraph flow and transitions, one idea per paragraph, each fact, caveat and definition said once (a short pointer elsewhere, no paragraph repeating another, within or across sections), narrative rather than ledger wording (no 'committed', 'archived', 'recorded run' or evidence-level tags in the running text; provenance stated once), short clear sentences with jargon explained at first use for a reader from a neighboring field, consistent terminology, no repetitive wording or formulaic transitions, the house rules (no en or em dashes, only needed hyphens, no comma right after a conjunction or connective, no paragraph opening with 'To', every abbreviation written out at first use and none in the abstract, no internal identifiers such as function names, versions or hashes), no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
    "model": "sonnet",
    "effort": "medium"
   },
