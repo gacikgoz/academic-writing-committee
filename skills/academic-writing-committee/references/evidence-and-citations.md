@@ -104,6 +104,7 @@ For high-stakes documents (clinical, policy, regulatory, a thesis's central clai
 - A composite sentence is supported only if every part is.
 - Build the ledger at least for every claim in the abstract and the conclusions: those are the ones readers repeat.
 - Unsupported and conflicting claims stay in an open-issues list, out of submission-ready prose.
+- The evidence record (this ledger, the evidence files and reports behind it) is where versions, hashes, run identifiers, file names and dates of runs live. The manuscript names each thing in plain words and leaves these identifiers to the record, the data or code availability statement or a supplement (house rule R6 in `language-mechanics.md`).
 
 A ledger entry for every factual sentence is right for high-assurance work and disproportionate for a textbook chapter of settled material. Scale the ledger to the stakes, but never skip the verification below.
 
@@ -158,7 +159,7 @@ Use a reference manager or a structured bibliography file (BibTeX, CSL JSON), ke
 
 - The venue's current style file or author instructions decide details such as title capitalization, journal abbreviations, the number of authors listed before "et al.," and DOI format. Style manuals are revised; do not rely on memory of an edition.
 - Include a DOI or other persistent identifier wherever one exists.
-- Cite software, datasets, and standards with version and identifier, as you would cite papers.
+- Cite software, datasets, and standards with version and identifier, as you would cite papers. Put the version in the reference entry and name the tool without it in the running text; for the software under study, release numbers, hashes and file names go to the availability statement or the evidence record (house rule R6 in `language-mechanics.md`).
 - In author-date styles, give page numbers for quotations and for specific claims in long works.
 
 ## Final Citation Audit

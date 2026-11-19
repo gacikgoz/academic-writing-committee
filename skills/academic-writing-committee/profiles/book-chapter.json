@@ -57,7 +57,7 @@
   },
   {
    "key": "language",
-   "focus": "fluency and coherence: paragraph flow and transitions, one idea per paragraph, consistent terminology, no repetitive wording or formulaic transitions, the house rules (no en or em dashes, only needed hyphens, no comma right after a conjunction or connective, no paragraph opening with 'To', every abbreviation written out at first use and none in the abstract), no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
+   "focus": "fluency and coherence: paragraph flow and transitions, one idea per paragraph, consistent terminology, no repetitive wording or formulaic transitions, the house rules (no en or em dashes, only needed hyphens, no comma right after a conjunction or connective, no paragraph opening with 'To', every abbreviation written out at first use and none in the abstract, no internal identifiers such as function names, versions or hashes), no chains of 'and', parallel lists, sentence variety, concision, and American or British spelling used consistently as configured",
    "model": "sonnet",
    "effort": "medium"
   }

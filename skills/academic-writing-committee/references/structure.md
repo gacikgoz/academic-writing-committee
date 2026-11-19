@@ -52,7 +52,7 @@ These rules are the skill's defaults for the title of an article, report or thes
 
 - **T1. Short and striking.** A title is a name, not a descriptive homework sentence. When the work has a system name, prefer the form *Name: what it does for whom*.
 - **T2. Lead with the method and the contribution, and name the domain.** In applied artificial intelligence, the method and the artificial intelligence contribution come first and the application domain is named. Do not shrink the contribution to one component ("tool use" when the system orchestrates several integrated systems), and do not name only one stage ("Deriving ...," "Training ...") when the contribution is a whole pipeline.
-- **T3. No abbreviations or acronyms.** Write "Unmanned Aerial Vehicle," not "UAV." A system name is allowed when the subtitle makes clear what it is.
+- **T3. No abbreviations or acronyms.** Write "Graph Neural Network," not "GNN." A system name is allowed when the subtitle makes clear what it is.
 - **T4. No claim the evidence does not carry.** An aim may be named as the target setting ("for integrated operations"), never as a result. Avoid words whose connotations the guidelines exclude, for example military "joint operations," or "swarm" and "fleet" when the work is about neither.
 - **T5. No vague scope prefix.** Do not open with a phrase that hides the contribution ("Towards integrated X operations: ..."); the words before the colon carry the most weight.
 

@@ -26,8 +26,9 @@
 # sources: the hyphen and dash rules, the coordination and repetition rules, the generic-
 # phrase lexicon, the underselling, certainty and state-of-the-art rules, the house rules
 # (dashes in prose and tables, predicative hyphens, commas after conjunctions, paragraphs
-# opening with "To", acronyms in the abstract), the title-style rules (abbreviations in the
-# title, title length), --disable, --allow-terms and --list-rules.
+# opening with "To", acronyms in the abstract, internal identifiers of the studied software),
+# the title-style rules (abbreviations in the title, title length), --disable, --allow-terms
+# and --list-rules.
 #
 # The license texts are in ../LICENSES/ (K-Dense-Inc-MIT.md, Claude-Code-Community-MIT.txt,
 # Vishal-Sachdev-MIT.txt). Standard library only. No network access. Input
@@ -65,13 +66,33 @@ EQUAL_PAIR_HYPHEN) stay silent, and HYPHEN_IN_RANGE and SPACED_HYPHEN advise "to
 instead of a dash. A project whose guidelines relax the dash rule runs with
 --disable DASH_IN_PROSE and gets the earlier dash conventions back.
 
+House rule R6, no internal identifiers (INTERNAL_IDENTIFIER, a warning). In prose, headings,
+captions, table cells, the node text of TikZ pictures and the text of algorithmic
+environments (not in comments, mathematics, the arguments of \\cite, \\ref, \\label and \\url,
+or the bibliography) it reports every \\texttt, \\verb, \\lstinline or \\code argument (inline
+code in Markdown) and every bare token that looks like an identifier of the studied software:
+camelCase with an internal capital and at least three lower-case letters
+(createUserAccount), snake_case (retry_on_timeout, int4_q), a dotted namespaced path
+of three or more parts (pkg.orders.findOrderById), a file name with a code or data extension
+(config.yaml), a version string (2.6.0, v1.2.3, "version 3.0", "release 4.2.1"; not a section
+number such as "Section 3.2.1"), and a hexadecimal token of 7 to 40 characters with both
+letters a-f and digits (a commit or report hash such as 9f3c2ab1). Names given with
+--allow-terms and common names of public software with internal capitals (GitHub, JavaScript,
+PyTorch, LaTeX, BibTeX, McNemar, iPhone, macOS, OpenAI, DeepSeek and a few more) are not
+reported, nor is a name with an internal capital that the run cites right after it
+("ToolSandbox \\cite{...}") or defines with an abbreviation ("NormalFloat (NF4)"), nor a key
+value in options (draw=cBlue). In Markdown an underscore inside a word is not taken for
+emphasis, so snake_case stays one token for every rule. The writer describes the thing in
+plain words; versions, hashes and run identifiers go to the data or code availability
+statement, a supplement or the evidence record.
+
 Title style (references/structure.md, "Titles"). The document title is \title{...} in LaTeX
 (preamble or body; notes such as \thanks and \tnoteref and mathematics are removed), the YAML
 front-matter "title:" in Markdown or, when no file of the run has either, the first "# "
 heading of the first Markdown or text file. TITLE_ABBREVIATION reports a token of two or more
-capitals (UAV, LLMs, GPT-4) or a listed mixed-case acronym (IoT, LiDAR) in it; roman numerals,
+capitals (GNN, LLMs, GPT-4) or a listed mixed-case acronym (IoT, LiDAR) in it; roman numerals,
 names given with --allow-terms, and a one-word system name that forms the whole part before
-the first colon of a title whose subtitle has at least three words ("VULCAN: A Benchmark for
+the first colon of a title whose subtitle has at least three words ("ImageNet: A Large-Scale Hierarchical Image Database
 ...") are not reported. TITLE_TOO_LONG is a note above 15 words and a warning above 20. Only
 the author approves a title; the checker does not judge whether a subtitle explains a name.
 
@@ -127,6 +148,9 @@ RULES = (
      "a LaTeX file whose only content is \\input or \\include: pass the included files"),
     ("POSSIBLE_PERSONAL_DATA", "warning", "housekeeping",
      "an identifier field (MRN, SSN, date of birth, patient name)"),
+    ("INTERNAL_IDENTIFIER", "warning", "housekeeping",
+     "house rule: code in \\texttt or backticks, or a function name, code identifier, file "
+     "name, version or hash in prose, captions, tables or figure labels"),
     ("FLOAT_NEVER_REFERENCED", "warning", "housekeeping",
      "a labeled figure or table (or Markdown caption) the text never refers to"),
     ("REFERENCE_TO_UNKNOWN_LABEL", "warning", "housekeeping",
@@ -216,7 +240,7 @@ RULES = (
     ("ACRONYM_USED_BEFORE_DEFINITION", "warning", "style",
      "house rule: an acronym used alone before the place where the body expands it"),
     ("TITLE_ABBREVIATION", "warning", "style",
-     "title style: an abbreviation or acronym in the document title (UAV, LLM, IoT); a "
+     "title style: an abbreviation or acronym in the document title (GNN, LLM, IoT); a "
      "system name before the colon of a title with a subtitle is allowed"),
     ("TITLE_TOO_LONG", "info/warning", "style",
      "title style: a document title of more than 15 words (note) or 20 words (warning)"),
@@ -721,6 +745,50 @@ ACRONYM_OK = {
     "KB", "MB", "GB", "TB", "PB",
 }
 
+# House rule R6: no internal identifiers of the studied software in the text. A candidate
+# token is a run of letters, digits and underscores, possibly joined by dots or slashes.
+IDENT_TOKEN_RE = re.compile(r"(?<![\w\u2039])[A-Za-z0-9_]+(?:[./][A-Za-z0-9_]+)*")
+IDENT_CAMEL_RE = re.compile(r"[a-z][A-Z]")
+IDENT_SNAKE_RE = re.compile(r"[A-Za-z0-9]_[A-Za-z0-9]")
+IDENT_VERSION_RE = re.compile(r"v?\d+(?:\.\d+){2,}")
+IDENT_HEX_RE = re.compile(r"[0-9a-f]{7,40}|[0-9A-F]{7,40}")
+IDENT_VERSION_PHRASE_RE = re.compile(
+    r"\b(?:[Vv]ersions?|[Bb]undles?|[Rr]eleases?)\s+v?\d+(?:\.\d+)+(?![\w.]*\d)")
+# A number such as 3.2.1 after one of these words is a section or item number, not a version.
+IDENT_NUMBERING_RE = re.compile(
+    r"(?:\b(?:sections?|secs?|chapters?|ch|appendix|appendices|figures?|figs?|tables?|tabs?|"
+    r"eqs?|equations?|theorems?|lemmas?|definitions?|propositions?|corollar(?:y|ies)|remarks?|"
+    r"examples?|exercises?|problems?|steps?|items?|parts?|clauses?|paragraphs?|algorithms?|"
+    r"lines?|listings?|annex)\.?|\u00a7)\s*$", re.IGNORECASE)
+# A name with an internal capital that is cited right after it ("ToolSandbox \cite{...}", "the
+# ToolLLM framework \cite{...}") or defined with an abbreviation ("NormalFloat (NF4)") names a
+# published work or a public term, not the studied software; it is then known for the whole run.
+IDENT_CITED_AFTER_RE = re.compile(
+    r"[\w\u2019'-]*(?:\s+[a-z][a-z-]{1,20}){0,2}\s*(?:\u2039cite\u203a|\([A-Z][A-Za-z0-9-]{1,10}\))")
+IDENT_FILE_EXTENSIONS = {
+    "py", "ipynb", "js", "mjs", "ts", "tsx", "jsx", "java", "rs", "go", "rb", "sh", "bash",
+    "ps1", "json", "jsonl", "yaml", "yml", "toml", "ini", "cfg", "conf", "env", "csv", "tsv",
+    "parquet", "sqlite", "db", "sql", "log", "xml", "html", "md", "tex", "bib", "txt", "lock",
+    "gguf", "onnx", "pt", "pth", "ckpt", "safetensors", "bin", "npz", "npy", "pkl", "zip", "tar",
+    "gz", "tgz", "whl", "dockerfile",
+}
+# Names of public software, companies and people with an internal capital, which R6 keeps.
+# Lower case; --allow-terms adds more.
+PUBLIC_MIXED_CASE_NAMES = {
+    "github", "gitlab", "javascript", "typescript", "pytorch", "tensorflow", "latex", "tikz",
+    "bibtex", "biblatex", "mcnemar", "mccabe", "mcdonald", "mcgraw", "macmillan", "mckinsey",
+    "iphone", "ipad", "ios", "macos", "macbook", "openai", "deepseek", "deepmind", "youtube",
+    "linkedin", "postgresql", "mongodb", "numpy", "scipy", "opencv", "openmp", "fastapi",
+    "graphql", "websocket", "powerpoint", "jupyterlab", "chatgpt", "huggingface", "langchain",
+    "llamaindex", "lightgbm", "catboost", "openreview", "researchgate", "arxiv", "biorxiv",
+    "medrxiv", "pubmed", "openstreetmap", "ardupilot", "qgroundcontrol", "airsim", "autocad",
+    "imagenet", "wordnet", "resnet", "alexnet", "googlenet", "mobilenet", "efficientnet",
+    "densenet", "pointnet", "convnet", "sentencepiece", "wordpiece", "fasttext", "glove",
+    "spacy", "biobert", "scibert", "codebert", "distilbert", "starcoder", "deepspeed",
+    "humaneval", "hotpotqa", "triviaqa", "toolbench", "agentbench", "webarena",
+    "node.js", "vue.js", "next.js", "d3.js", "three.js", "chart.js", "llama.cpp", "whisper.cpp",
+}
+
 # Title style (references/structure.md, "Titles"). The document title is \title{...} in LaTeX
 # (preamble or body, with an optional [short] argument and \thanks or \tnoteref notes
 # removed), the YAML front-matter "title:" in Markdown, or, when no file of the run has either,
@@ -731,7 +799,7 @@ LATEX_TITLE_NOTE_RE = re.compile(
 YAML_TITLE_RE = re.compile(r"^title\s*:\s*(.*?)\s*$")
 MD_TITLE_RE = re.compile(r"^#\s+(\S.*?)\s*#*\s*$")
 # An abbreviation in a title: a token of two or more capitals (digits allowed, a plural "s"
-# allowed: UAV, LLMs, GPT-4, 3D is not one) or a mixed-case acronym from the list below.
+# allowed: GNN, LLMs, GPT-4, 3D is not one) or a mixed-case acronym from the list below.
 TITLE_CAPS_RE = re.compile(
     r"(?<![A-Za-z0-9])([A-Z0-9]*[A-Z][A-Z0-9]*[A-Z][A-Z0-9]*)(s?)(?![A-Za-z0-9])")
 TITLE_MIXED_ACRONYMS = {
@@ -746,8 +814,8 @@ ROMAN_RE = re.compile(r"X{0,3}(?:IX|IV|V?I{0,3})")
 TITLE_NOTE_WORDS = 15      # more words than this: a note
 TITLE_WARNING_WORDS = 20   # more words than this: a warning
 
-# A proper name introduced with a descriptive noun ("the VULCAN framework", "the BERT encoder",
-# "the GGUF file format"): the house rule's form for names, which a reader confirms.
+# A proper name introduced with a descriptive noun ("the ImageNet dataset", "the BERT encoder",
+# "the HDF5 file format"): the house rule's form for names, which a reader confirms.
 DESCRIPTIVE_NOUN_RE = re.compile(
     r"^\s*(?:\u2039cite\u203a\s*)?(?:[a-z]+\s+){0,2}(?:framework|benchmark|dataset|corpus|"
     r"encoder|decoder|model|method|algorithm|pipeline|library|toolkit|tool|format|protocol|"
@@ -776,6 +844,16 @@ MATH_DISPLAY_ENVS = {
     "equation", "align", "alignat", "gather", "multline", "eqnarray", "displaymath", "flalign",
 }
 LATEX_VERBATIM_ENVS = {"verbatim", "lstlisting", "minted", "comment", "filecontents", "Verbatim"}
+# Skipped environments whose labels or steps are text: INTERNAL_IDENTIFIER reads the node text
+# of a picture and the text of an algorithm (house rule R6).
+LATEX_PICTURE_ENVS = {"tikzpicture", "pgfpicture"}
+LATEX_ALGORITHM_ENVS = {"algorithmic", "algorithm2e"}
+TIKZ_NODE_TEXT_RE = re.compile(
+    r"\b(?:node|label\s*=\s*(?:[a-z ]{1,20}:)?)(?:\s*(?:\[[^\]\n]{0,300}\]|\([^()\n]{0,100}\)|at\b))*"
+    r"\s*\{")
+LATEX_CODE_ARG_RE = re.compile(
+    r"\\(?:verb|lstinline)\*?([^\sA-Za-z{])([^\n]*?)\1|\\(?:lstinline|texttt|code)\{([^{}\n]{0,400})\}")
+MD_CODE_SPAN_RE = re.compile(r"`([^`\n]+)`")
 # Skipped environments whose cells are text: DASH_IN_PROSE reads them (house rule R1).
 LATEX_TABLE_ENVS = {
     "tabular", "tabularx", "longtable", "tabulary", "supertabular", "xltabular", "tblr",
@@ -823,7 +901,9 @@ LATEX_DROP_RE = re.compile(
     r"usepackage|documentclass|vspace|hspace|setlength|newcommand|renewcommand|"
     r"setcounter|addtocounter|addtolength|definecolor|captionsetup|hypersetup|newtheorem|"
     r"newenvironment|renewenvironment|DeclareMathOperator|pagenumbering|pagestyle|"
-    r"thispagestyle|numberwithin|graphicspath|colorlet|tikzset|pgfplotsset|lstset)"
+    r"thispagestyle|numberwithin|graphicspath|colorlet|tikzset|pgfplotsset|lstset|algtext|"
+    r"algrenewtext|algnotext|algnewcommand|algrenewcommand|algdef|algblock|algblockdefx|"
+    r"algcblock|algcblockdefx)"
     r"\*?(?:\[[^\]]{0,200}\])*(?:\{[^}]*\})*"
 )
 # Quoted text is someone else's words or a mention of a phrase ("the the"), not the author's
@@ -971,7 +1051,9 @@ def mask_markdown(line: str) -> str:
     line = re.sub(r"(?<![\w.])@[A-Za-z0-9_][\w:.-]*", f" {CITE} ", line)
     line = re.sub(r"\[\^[^\]]+\]", " ", line)
     line = re.sub(r"</?[A-Za-z][^<>\n]{0,200}>", " ", line)
-    return re.sub(r"[*_]{1,3}(?=\S)|(?<=\S)[*_]{1,3}", "", line)
+    # Emphasis marks go; an underscore inside a word (snake_case) is not emphasis and stays.
+    return re.sub(r"\*{1,3}(?=\S)|(?<=\S)\*{1,3}|(?<![A-Za-z0-9])_{1,3}(?=\S)"
+                  r"|(?<=\S)_{1,3}(?![A-Za-z0-9])", "", line)
 
 
 def _mask_paren_citation(match: re.Match[str]) -> str:
@@ -1089,6 +1171,9 @@ class Document:
         self.paragraph_item: list[bool] = []          # paragraph is a list item
         self.paragraph_abstract: list[bool] = []      # paragraph lies in the abstract
         self.table_lines: list[tuple[int, str]] = []  # masked text of table cells
+        # Masked node text of pictures and text of algorithms, with where it was found.
+        self.figure_lines: list[tuple[int, str, str]] = []
+        self.code_spans: list[tuple[int, str]] = []   # \texttt, \verb or `code` arguments
         self.headings: list[tuple[int, str]] = []
         # Document title: (line, text, explicit), explicit for \title or YAML "title:".
         self.title: tuple[int, str, bool] | None = None
@@ -1141,6 +1226,24 @@ class Document:
             masked = mask_common(mask_latex(line))
             if MARKER_RE.sub("", masked).strip():
                 self.table_lines.append((number, masked))
+            self._scan_code(line, number)
+
+        def add_figure_line(number: int, line: str, env: str) -> None:
+            if env in LATEX_ALGORITHM_ENVS:
+                parts = [line]
+                where = " in an algorithm"
+            else:
+                parts = []
+                for match in TIKZ_NODE_TEXT_RE.finditer(line):
+                    end = _braced(line, match.end())
+                    parts.append(line[match.end():end - 1 if end > 0 else len(line)])
+                where = " in a figure label"
+            for part in parts:
+                part = mask_inline_math(part, False)[0]
+                self._scan_code(part, number)
+                masked = mask_common(mask_latex(part))
+                if MARKER_RE.sub("", masked).strip():
+                    self.figure_lines.append((number, masked, where))
 
         def track_envs(line: str) -> None:
             nonlocal float_depth, theorem_depth, abstract_depth
@@ -1172,6 +1275,8 @@ class Document:
                     end = re.search(r"\\end\{" + re.escape(skip_env) + r"\*?\}", line)
                     if skip_env in LATEX_TABLE_ENVS:
                         add_table_line(number, line[:end.start()] if end else line)
+                    elif skip_env in LATEX_PICTURE_ENVS | LATEX_ALGORITHM_ENVS:
+                        add_figure_line(number, line[:end.start()] if end else line, skip_env)
                     if end:
                         skip_env = None
                         track_envs(line[end.start():])
@@ -1190,6 +1295,8 @@ class Document:
                 if skipped:
                     if skipped[-1] in LATEX_TABLE_ENVS:
                         add_table_line(number, line)
+                    elif skipped[-1] in LATEX_PICTURE_ENVS | LATEX_ALGORITHM_ENVS:
+                        add_figure_line(number, line, skipped[-1])
                     if not re.search(r"\\end\{" + re.escape(skipped[-1]) + r"\*?\}", line):
                         skip_env = skipped[-1]
                     flush()
@@ -1219,6 +1326,7 @@ class Document:
                     flush()   # each list item is its own paragraph
                     current_item = True
                 line, inline_open = mask_inline_math(line, inline_open)
+                self._scan_code(line, number)
                 masked = mask_common(mask_latex(line))
                 if LATEX_HEADING_RE.match(stripped):
                     flush()
@@ -1279,6 +1387,7 @@ class Document:
                     and not in_list:
                 continue   # indented code block: not prose, and not checked for placeholders
             self.raw.append((number, re.sub(r"`[^`]*`", " ", line)))
+            self._scan_code(line, number)
             if not stripped:
                 flush()
                 continue
@@ -1307,6 +1416,20 @@ class Document:
             current.append((number, masked))
             current_abstract = current_abstract or md_abstract
         flush()
+
+    def _scan_code(self, line: str, number: int) -> None:
+        """Collect the arguments of \\texttt, \\verb, \\lstinline and \\code, or Markdown
+        inline code, for house rule R6. Comments and mathematics are already removed."""
+        if self.latex:
+            for match in LATEX_CODE_ARG_RE.finditer(line):
+                text = match.group(2) if match.group(2) is not None else match.group(3)
+                text = re.sub(r"\\[-/@,]|\\(?:allowbreak|linebreak|break|hspace\{[^}]*\})", "", text)
+                text = re.sub(r"\\([_&%$#{}~^])", r"\1", text)
+                text = re.sub(r"\\[A-Za-z]+\*?\s*", "", text).replace("{", "").replace("}", "")
+                self.code_spans.append((number, text.strip()))
+        else:
+            for match in MD_CODE_SPAN_RE.finditer(line):
+                self.code_spans.append((number, match.group(1).strip()))
 
     def _scan_labels(self, line: str, number: int, in_float: bool) -> None:
         for name in LATEX_LABEL_RE.findall(line):
@@ -1440,6 +1563,118 @@ def check_dashes(doc: Document, text: str, starts: list[tuple[int, int]], report
             advice = "use a comma, a colon, parentheses or a new sentence"
         report.add(doc.path, line_at(starts, match.start()), "warning", "DASH_IN_PROSE",
                    f'"{quote(context.strip())}": {kind}{where}; {advice}')
+
+
+IDENT_ADVICE = ("describe the thing in plain words; versions and hashes go to the availability "
+                "statement or the evidence record")
+
+
+def _identifier_kind(token: str) -> str:
+    """What an identifier-like token looks like, or "" if it looks like an ordinary word."""
+    if IDENT_VERSION_RE.fullmatch(token):
+        return "a version number"
+    if IDENT_HEX_RE.fullmatch(token) and re.search(r"\d", token) and re.search(r"[A-Fa-f]", token):
+        return "a hash or hash prefix"
+    path_parts = token.split("/")
+    name_parts = path_parts[-1].split(".")
+    if (len(name_parts) >= 2 and name_parts[-1].lower() in IDENT_FILE_EXTENSIONS
+            and re.search(r"[A-Za-z]", ".".join(name_parts[:-1]))):
+        return "a file name"
+    for part in path_parts:
+        dotted = part.split(".")
+        if (len(dotted) >= 3 and all(re.match(r"[A-Za-z_]", piece) for piece in dotted)
+                and sum(len(piece) >= 2 for piece in dotted) >= 2):
+            return "a namespaced code path"
+        for piece in dotted:
+            if IDENT_SNAKE_RE.search(piece) and re.search(r"[A-Za-z]", piece):
+                return "a code identifier (snake_case)"
+            if IDENT_CAMEL_RE.search(piece) and sum(c.islower() for c in piece) >= 3:
+                return "a function or method name (camelCase)"
+    return ""
+
+
+def identifier_tokens(text: str, known: set[str]) -> list[tuple[int, str, str]]:
+    """House rule R6: (offset, token, kind) for every identifier-like token in masked text."""
+    found: list[tuple[int, str, str]] = []
+    taken: list[tuple[int, int]] = []
+    for match in IDENT_VERSION_PHRASE_RE.finditer(text):
+        found.append((match.start(), match.group(0), "a version number"))
+        taken.append(match.span())
+    for match in IDENT_TOKEN_RE.finditer(text):
+        if any(start <= match.start() < end for start, end in taken):
+            continue
+        token = match.group(0).rstrip("._/")
+        if token.lower() in known:
+            continue
+        if re.search(r"=\s*$", text[max(0, match.start() - 3):match.start()]) or \
+                text.startswith("!", match.end()):
+            continue   # a key value in options (draw=cBlue, fill=cBlue!7), not prose
+        kind = _identifier_kind(token)
+        if kind == "a version number" and IDENT_NUMBERING_RE.search(text[:match.start()]):
+            continue   # Section 3.2.1, Table 4.1.2
+        if kind:
+            found.append((match.start(), token, kind))
+    return found
+
+
+def _identifier_sources(doc: Document) -> list[tuple[str, list[tuple[int, int]], str]]:
+    """Masked text that R6 reads: (text, line starts, where) for headings and captions,
+    paragraphs, table cells, picture node text and algorithm text."""
+    sources: list[tuple[str, list[tuple[int, int]], str]] = []
+    for number, heading in doc.headings:
+        sources.append((heading, [(0, number)], ""))
+    for paragraph in doc.paragraphs:
+        joined, starts = join_paragraph(paragraph)
+        sources.append((joined, starts, ""))
+    for number, cells in doc.table_lines:
+        sources.append((cells, [(0, number)], " in a table cell"))
+    for number, text, where in doc.figure_lines:
+        sources.append((text, [(0, number)], where))
+    return sources
+
+
+def cited_names(docs: list[Document]) -> set[str]:
+    """Names with an internal capital that the run cites or defines with an abbreviation
+    (published works, public terms); R6 does not report them anywhere in the run."""
+    names: set[str] = set()
+    for doc in docs:
+        for text, _, _ in _identifier_sources(doc):
+            for match in IDENT_TOKEN_RE.finditer(text):
+                token = match.group(0)
+                if IDENT_CAMEL_RE.search(token) and IDENT_CITED_AFTER_RE.match(
+                        text, match.end(), match.end() + 80):
+                    names.add(token.lower())
+    return names
+
+
+def check_internal_identifiers(doc: Document, report: Report, allow: set[str]) -> None:
+    """House rule R6: no names of functions, operations or endpoints, code identifiers, file
+    names, versions or hashes of the studied software in prose, captions, tables, figure
+    labels or algorithms. Code set in \\texttt (or Markdown backticks) is reported as a whole;
+    bare tokens are reported by shape. Names in --allow-terms (passed in as allow, together with
+    the names the run cites, see cited_names) and public names with internal capitals
+    (PUBLIC_MIXED_CASE_NAMES) are not reported."""
+    known = allow | PUBLIC_MIXED_CASE_NAMES
+    seen: set[tuple[int, str]] = set()
+    for number, text in doc.code_spans:
+        if not re.search(r"[A-Za-z]", text) or text.lower() in known:
+            continue
+        if (number, text.lower()) in seen:
+            continue
+        seen.add((number, text.lower()))
+        for match in IDENT_TOKEN_RE.finditer(text):
+            seen.add((number, match.group(0).rstrip("._/").lower()))
+        report.add(doc.path, number, "warning", "INTERNAL_IDENTIFIER",
+                   f'"{quote(text)}" is set as code (house rule R6): {IDENT_ADVICE}; the name '
+                   "of a public tool may stay (--allow-terms)")
+    for text, starts, where in _identifier_sources(doc):
+        for offset, token, kind in identifier_tokens(text, known):
+            number = line_at(starts, offset)
+            if (number, token.lower()) in seen:
+                continue
+            seen.add((number, token.lower()))
+            report.add(doc.path, number, "warning", "INTERNAL_IDENTIFIER",
+                       f'"{quote(token)}" looks like {kind}{where} (house rule R6): {IDENT_ADVICE}')
 
 
 def check_mechanics(doc: Document, text: str, starts: list[tuple[int, int]], report: Report,
@@ -2086,7 +2321,7 @@ def check_title(docs: list[Document], report: Report, allow: set[str]) -> None:
         if found:
             report.add(doc.path, line, "warning", "TITLE_ABBREVIATION",
                        f"title uses {', '.join(found)}: write the words in a title "
-                       "(\"Unmanned Aerial Vehicle,\" not \"UAV\"); a system name is allowed "
+                       "(\"Graph Neural Network,\" not \"GNN\"); a system name is allowed "
                        "as \"Name: what it does for whom\" (references/structure.md, Titles)")
         if len(words) > TITLE_NOTE_WORDS:
             severity = "warning" if len(words) > TITLE_WARNING_WORDS else "info"
@@ -2146,6 +2381,7 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
         disabled |= STYLE_RULES
     report = Report(disabled)
     allow = set(args.allowed_terms)
+    identifier_allow = allow | cited_names(docs) if "INTERNAL_IDENTIFIER" not in disabled else allow
     topic = heading_terms(docs)
     lengths: list[int] = []
     empty: list = []
@@ -2153,6 +2389,8 @@ def run_checks(docs: list[Document], args: argparse.Namespace) -> tuple[Report, 
         terms = topic | document_terms([doc])
         check_raw_lines(doc, report)
         check_split_placeholders(doc, report)
+        if "INTERNAL_IDENTIFIER" not in disabled:
+            check_internal_identifiers(doc, report, identifier_allow)
         for number, heading in doc.headings:
             check_mechanics(doc, heading, [(0, number)], report, allow)
         if "DASH_IN_PROSE" not in disabled:
@@ -2241,8 +2479,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="comma-separated fixed technical terms that may repeat or keep "
                         "their hyphen (REPEATED_CONTENT_WORD, REPEATED_PHRASE, "
                         "EQUAL_PAIR_HYPHEN, LY_ADVERB_HYPHEN, PREDICATIVE_COMPOUND_HYPHEN), and "
-                        "names of works, systems or formats that need no expansion "
-                        "(ACRONYM_NOT_DEFINED, TITLE_ABBREVIATION); repeatable")
+                        "names of works, systems, formats or public tools that need no "
+                        "expansion or may be set as code (ACRONYM_NOT_DEFINED, "
+                        "TITLE_ABBREVIATION, INTERNAL_IDENTIFIER); repeatable")
     parser.add_argument("--disable", action="append", default=[], metavar="RULE[,RULE...]",
                         help="switch off these rule ids; repeatable (see --list-rules)")
     parser.add_argument("--no-style", action="store_true",
